@@ -4,6 +4,55 @@ require_once __DIR__ . '/../includes/auth.php';
 requireLogin();
 requireAdmin();
 $user = getUserById((int)$_SESSION['user_id']);
+
+$stats = [
+    'products' => 0,
+    'users' => 0,
+    'admins' => 0,
+    'orders' => 0,
+    'revenue' => 0.0,
+];
+$categoryBreakdown = [];
+$statusBreakdown = [
+    'pending' => 0,
+    'approved' => 0,
+    'completed' => 0,
+    'cancelled' => 0,
+];
+
+try {
+    $stats['products'] = (int)($pdo->query('SELECT COUNT(*) FROM products')->fetchColumn());
+} catch (Throwable $e) {}
+
+try {
+    $stats['users'] = (int)($pdo->query('SELECT COUNT(*) FROM users')->fetchColumn());
+    $stats['admins'] = (int)($pdo->query('SELECT COUNT(*) FROM users WHERE is_admin = 1')->fetchColumn());
+} catch (Throwable $e) {}
+
+try {
+    $stats['orders'] = (int)($pdo->query('SELECT COUNT(*) FROM requests')->fetchColumn());
+    $revenueRow = $pdo->query('SELECT COALESCE(SUM(total_amount), 0) FROM requests')->fetchColumn();
+    $stats['revenue'] = (float)$revenueRow;
+
+    $statusStmt = $pdo->query('SELECT status, COUNT(*) AS total FROM requests GROUP BY status');
+    foreach ($statusStmt->fetchAll(PDO::FETCH_ASSOC) as $row) {
+        $status = strtolower((string)($row['status'] ?? ''));
+        if (isset($statusBreakdown[$status])) {
+            $statusBreakdown[$status] = (int)$row['total'];
+        }
+    }
+} catch (Throwable $e) {}
+
+try {
+    $categoryStmt = $pdo->query('SELECT c.name, COUNT(p.id) AS product_count FROM categories c LEFT JOIN products p ON p.category_id = c.id GROUP BY c.id, c.name ORDER BY product_count DESC, c.name ASC LIMIT 5');
+    $categoryBreakdown = $categoryStmt->fetchAll(PDO::FETCH_ASSOC);
+} catch (Throwable $e) {}
+
+$maxCategoryCount = 0;
+foreach ($categoryBreakdown as $entry) {
+    $maxCategoryCount = max($maxCategoryCount, (int)($entry['product_count'] ?? 0));
+}
+$maxCategoryCount = $maxCategoryCount > 0 ? $maxCategoryCount : 1;
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -63,27 +112,96 @@ $user = getUserById((int)$_SESSION['user_id']);
     </nav>
 
     <main id="main-content" class="container py-5">
-        <div class="d-flex justify-content-between align-items-center mb-4">
+        <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
             <div>
                 <h1>ADMIN DASHBOARD</h1>
-                <p class="mb-0">Welcome, <?php echo htmlspecialchars($user['name'] ?? 'Admin'); ?>.</p>
+                <p class="mb-0 text-muted">Welcome, <?php echo htmlspecialchars($user['name'] ?? 'Admin'); ?>.</p>
             </div>
             <div>
                 <a href="../index.php" class="btn btn-outline-light">Site</a>
                 <a href="../logout.php" class="btn btn-outline-danger">Log out</a>
             </div>
         </div>
-    <div class="card">
-        <div class="card-body">
-            <h4>Management</h4>
-            <div class="list-group">
-                <a href="../products.php" class="list-group-item list-group-item-action">View Products</a>
-                <a href="products.php" class="list-group-item list-group-item-action">Upload Products</a>
-                <a href="users.php" class="list-group-item list-group-item-action">Manage Users</a>
-                <a href="orders.php" class="list-group-item list-group-item-action">Orders</a>
+
+        <div class="row g-4 mb-4">
+            <div class="col-md-6 col-xl-3">
+                <div class="admin-stat-card">
+                    <div class="label">Products</div>
+                    <div class="value"><?php echo number_format($stats['products']); ?></div>
+                    <div class="trend positive">Live catalog</div>
+                </div>
+            </div>
+            <div class="col-md-6 col-xl-3">
+                <div class="admin-stat-card">
+                    <div class="label">Customers</div>
+                    <div class="value"><?php echo number_format($stats['users']); ?></div>
+                    <div class="trend">Active accounts</div>
+                </div>
+            </div>
+            <div class="col-md-6 col-xl-3">
+                <div class="admin-stat-card">
+                    <div class="label">Admins</div>
+                    <div class="value"><?php echo number_format($stats['admins']); ?></div>
+                    <div class="trend">Team access</div>
+                </div>
+            </div>
+            <div class="col-md-6 col-xl-3">
+                <div class="admin-stat-card">
+                    <div class="label">Orders</div>
+                    <div class="value"><?php echo number_format($stats['orders']); ?></div>
+                    <div class="trend positive">Requests tracked</div>
+                </div>
             </div>
         </div>
-    </div>
+
+        <div class="row g-4">
+            <div class="col-xl-7">
+                <div class="card admin-panel-card h-100">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h4 class="mb-0">Category distribution</h4>
+                            <span class="badge bg-secondary">Top 5</span>
+                        </div>
+                        <?php if (empty($categoryBreakdown)): ?>
+                            <div class="alert alert-info mb-0">No category stats available yet.</div>
+                        <?php else: ?>
+                            <?php foreach ($categoryBreakdown as $category): ?>
+                                <?php $percent = ((int)$category['product_count'] / $maxCategoryCount) * 100; ?>
+                                <div class="chart-row">
+                                    <div class="chart-label"><?php echo htmlspecialchars($category['name'] ?? 'Category'); ?></div>
+                                    <div class="chart-bar-track">
+                                        <div class="chart-bar" style="width: <?php echo $percent; ?>%;"></div>
+                                    </div>
+                                    <div class="chart-value"><?php echo (int)($category['product_count'] ?? 0); ?></div>
+                                </div>
+                            <?php endforeach; ?>
+                        <?php endif; ?>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-xl-5">
+                <div class="card admin-panel-card h-100">
+                    <div class="card-body">
+                        <h4 class="mb-3">Order status</h4>
+                        <?php foreach ($statusBreakdown as $status => $count): ?>
+                            <?php $statusTotal = max(1, $stats['orders']); ?>
+                            <div class="chart-row compact">
+                                <div class="chart-label text-capitalize"><?php echo htmlspecialchars($status); ?></div>
+                                <div class="chart-bar-track">
+                                    <div class="chart-bar status-<?php echo htmlspecialchars($status); ?>" style="width: <?php echo ($count / $statusTotal) * 100; ?>%;"></div>
+                                </div>
+                                <div class="chart-value"><?php echo $count; ?></div>
+                            </div>
+                        <?php endforeach; ?>
+                        <div class="mt-4 pt-3 border-top border-secondary-subtle">
+                            <div class="text-muted small">Revenue</div>
+                            <div class="fs-3 fw-bold">₱<?php echo number_format($stats['revenue'], 2); ?></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </main>
 </body>
 </html>

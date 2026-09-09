@@ -50,15 +50,15 @@ if (!empty($cart) && is_array($cart)) {
 }
 ?>
 
-<div class="container mt-4">
+<div class="container page-panel mt-4">
     <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4">
         <div>
             <h1 class="mb-1">Welcome, <?php echo htmlspecialchars($user['name'] ?? ''); ?></h1>
             <p class="text-muted mb-0">Manage your account and shopping cart.</p>
         </div>
-        <div class="d-flex gap-2 mt-3 mt-md-0">
-            <a href="products.php" class="btn btn-outline-primary">Continue shopping</a>
-            <a href="logout.php" class="btn btn-outline-secondary">Log out</a>
+        <div class="d-flex gap-2 mt-3 mt-md-0 flex-wrap">
+            <a href="products.php" class="btn btn-primary">Continue shopping</a>
+            <a href="logout.php" class="btn btn-outline-light border border-light text-white">Log out</a>
         </div>
     </div>
 
@@ -112,29 +112,6 @@ if (!empty($cart) && is_array($cart)) {
                     <?php endif; ?>
                 </div>
             </div>
-        </div>
-        <div class="col-12">
-    <form method="post" class="col-md-6">
-        <div class="mb-3">
-            <label class="form-label">Name</label>
-            <input name="name" class="form-control" value="<?php echo htmlspecialchars($user['name'] ?? ''); ?>">
-        </div>
-        <div class="mb-3">
-            <label class="form-label">Email</label>
-            <input type="email" name="email" class="form-control" value="<?php echo htmlspecialchars($user['email'] ?? ''); ?>">
-        </div>
-        <hr>
-        <p>Leave password empty to keep current password.</p>
-        <div class="mb-3">
-            <label class="form-label">New password</label>
-            <input type="password" name="password" class="form-control">
-        </div>
-        <div class="mb-3">
-            <label class="form-label">Confirm new password</label>
-            <input type="password" name="password_confirm" class="form-control">
-        </div>
-        <button class="btn btn-primary" type="submit">Save changes</button>
-    </form>
         </div>
     </div>
 </div>

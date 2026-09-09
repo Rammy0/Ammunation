@@ -98,10 +98,13 @@ function productImagePath($p){
 }
 ?>
 
-<div class="container mt-4">
+<div class="container page-panel mt-4">
     <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
-        <h1 class="mb-0">Products</h1>
-        <form method="get" action="products.php" class="d-flex align-items-center gap-2" role="search">
+        <div>
+            <h1 class="mb-1">Products</h1>
+            <p class="text-muted mb-0">Find the right gear for your next move.</p>
+        </div>
+        <form method="get" action="products.php" class="product-toolbar d-flex flex-row align-items-center gap-2" role="search">
             <label for="product-search" class="visually-hidden">Search products</label>
             <input
                 type="search"
@@ -111,9 +114,10 @@ function productImagePath($p){
                 class="form-control"
                 placeholder="Search products..."
                 aria-label="Search products"
+                style="max-width: 360px; min-width: 180px;"
             >
             <label for="product-category" class="visually-hidden">Filter by category</label>
-            <select id="product-category" name="category" class="form-select" aria-label="Filter by category">
+            <select id="product-category" name="category" class="form-select" aria-label="Filter by category" style="max-width: 220px; min-width: 180px;">
                 <option value="0">All categories</option>
                 <?php foreach ($categories as $category): ?>
                     <option value="<?php echo (int)$category['id']; ?>"<?php echo $categoryId === (int)$category['id'] ? ' selected' : ''; ?>><?php echo htmlspecialchars($category['name']); ?></option>
@@ -122,7 +126,7 @@ function productImagePath($p){
             <button type="submit" class="btn btn-primary text-nowrap">Search</button>
         </form>
     </div>
-    <div id="product-grid" class="row">
+    <div id="product-grid" class="row g-4">
         <?php if (empty($products)): ?>
             <div id="no-products-message" class="col-12"><div class="alert alert-info"><?php echo ($search !== '' || $categoryId > 0) ? 'No products matched your filters.' : 'No products found.'; ?></div></div>
         <?php endif; ?>

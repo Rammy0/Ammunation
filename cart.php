@@ -64,10 +64,10 @@ if (!empty($cart) && is_array($cart)) {
 }
 ?>
 
-<div class="container mt-4">
-    <div class="d-flex justify-content-between align-items-center mb-4">
+<div class="container page-panel mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
         <h1 class="mb-0">Cart</h1>
-        <a href="products.php" class="btn btn-outline-secondary">Back to products</a>
+        <a href="products.php" class="btn btn-primary px-4 py-2 shadow-sm">Back to products</a>
     </div>
     <?php if (isset($_GET['buy_now'])): ?>
         <div class="alert alert-success">Item added. Review your order below before checkout.</div>

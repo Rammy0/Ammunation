@@ -93,21 +93,23 @@ function productImagePath(array $p): string {
 
 ?>
 
-<div class="container mt-4">
+<div class="container page-panel mt-4">
     <?php if (!$product): ?>
         <div class="alert alert-warning">Product not found.</div>
     <?php else: ?>
-        <div class="row">
+        <div class="row g-4 align-items-center">
             <div class="col-md-6">
-                <img src="<?php echo htmlspecialchars(productImagePath($product) . '?v=' . (int)$product['id']); ?>" class="img-fluid" alt="<?php echo htmlspecialchars($product['name']); ?>">
+                <div class="card p-3 border-0">
+                    <img src="<?php echo htmlspecialchars(productImagePath($product) . '?v=' . (int)$product['id']); ?>" class="img-fluid rounded" alt="<?php echo htmlspecialchars($product['name']); ?>">
+                </div>
             </div>
             <div class="col-md-6">
-                <h1><?php echo htmlspecialchars($product['name']); ?></h1>
-                <?php if (!empty($product['category_name'])): ?><p class="text-muted"><?php echo htmlspecialchars($product['category_name']); ?></p><?php endif; ?>
-                <h3 class="text-primary">₱<?php echo number_format((float)($product['price'] ?? 0),2); ?></h3>
-                <p><?php echo nl2br(htmlspecialchars($product['description'] ?? '')); ?></p>
+                <h1 class="mb-2"><?php echo htmlspecialchars($product['name']); ?></h1>
+                <?php if (!empty($product['category_name'])): ?><p class="text-muted mb-3"><?php echo htmlspecialchars($product['category_name']); ?></p><?php endif; ?>
+                <h3 class="text-primary mb-3">₱<?php echo number_format((float)($product['price'] ?? 0),2); ?></h3>
+                <p class="lead"><?php echo nl2br(htmlspecialchars($product['description'] ?? '')); ?></p>
                 <?php if (isLoggedIn()): ?>
-                    <div class="d-flex gap-2 mb-3">
+                    <div class="d-flex flex-wrap gap-2 mb-3">
                         <form method="post">
                             <?php echo csrfInputField('cart'); ?>
                             <input type="hidden" name="product_id" value="<?php echo (int)$product['id']; ?>">
@@ -124,7 +126,10 @@ function productImagePath(array $p): string {
                 <?php else: ?>
                     <a href="login.php?redirect=<?php echo rawurlencode('product.php?id=' . (int)$product['id']); ?>" class="btn btn-outline-secondary mb-3">Log in to buy</a>
                 <?php endif; ?>
-                <p><a href="mailto:?subject=Check%20this%20product&body=<?php echo rawurlencode('Take a look: ' . rtrim($site_base_url, '/') . $_SERVER['REQUEST_URI']); ?>" class="btn btn-outline-secondary">Share</a></p>
+                <div class="d-flex flex-wrap gap-2 align-items-center mt-3">
+                    <a href="products.php" class="btn btn-outline-secondary">Back</a>
+                    <a href="mailto:?subject=Check%20this%20product&body=<?php echo rawurlencode('Take a look: ' . rtrim($site_base_url, '/') . $_SERVER['REQUEST_URI']); ?>" class="btn btn-outline-secondary">Share</a>
+                </div>
             </div>
         </div>
     <?php endif; ?>

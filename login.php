@@ -2,7 +2,7 @@
 require_once __DIR__ . '/includes/auth.php';
 
 $errors = [];
-$email = '';
+$loginInput = '';
 $redirect = trim((string)($_GET['redirect'] ?? $_POST['redirect'] ?? ''));
 if ($redirect === '' || preg_match('/^[a-zA-Z][a-zA-Z0-9_-]*\.php(?:\?[^\/]*)?$/', $redirect) !== 1) {
     $redirect = 'index.php';
@@ -16,13 +16,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (empty($_POST['csrf_token']) || !validateCsrfToken((string)($_POST['csrf_token'] ?? ''), 'login')) {
             $errors[] = 'Invalid or expired request (CSRF token). Please reload the page and try again.';
         } else {
-            $email = trim($_POST['email'] ?? '');
+            $loginInput = trim((string)($_POST['login'] ?? ''));
             $password = $_POST['password'] ?? '';
-            if (!filter_var($email, FILTER_VALIDATE_EMAIL)) $errors[] = 'Enter a valid email.';
-            if ($password === '') $errors[] = 'Enter your password.';
+            if ($loginInput === '') {
+                $errors[] = 'Enter your email or username.';
+            }
+            if ($password === '') {
+                $errors[] = 'Enter your password.';
+            }
 
             if (!$errors) {
-                $user = getUserByEmail($email);
+                $user = getUserByLoginIdentifier($loginInput);
                 if ($user && password_verify($password, $user['password'])) {
                     // Successful login: clear attempts
                     clearLoginAttempts($ip);
@@ -56,7 +60,7 @@ $just_registered = isset($_GET['registered']);
     <form method="post">
         <?php echo csrfInputField('login'); ?>
         <input type="hidden" name="redirect" value="<?php echo htmlspecialchars($redirect); ?>">
-        <div class="mb-3"><label class="form-label">Email</label><input type="email" name="email" class="form-control" value="<?php echo htmlspecialchars($email); ?>" required></div>
+        <div class="mb-3"><label class="form-label">Email or Username</label><input type="text" name="login" class="form-control" value="<?php echo htmlspecialchars($loginInput); ?>" placeholder="Enter your email or username" required></div>
         <div class="mb-3"><label class="form-label">Password</label><input type="password" name="password" class="form-control" required></div>
         <button class="btn btn-dark w-100" type="submit">LOG IN</button>
     </form>

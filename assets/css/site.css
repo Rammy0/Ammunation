@@ -38,6 +38,15 @@ h1, h2, h3, h4, h5, .navbar, .side-menu, .tagline { font-family: 'Rajdhani', san
   box-shadow: 0 12px 32px rgba(0,0,0,.24);
 }
 
+.page-panel {
+  background: linear-gradient(135deg, rgba(28, 24, 18, 0.88), rgba(78, 67, 42, 0.82), rgba(166, 145, 92, 0.74));
+  border: 1px solid rgba(241, 223, 173, 0.22);
+  border-radius: 18px;
+  box-shadow: 0 12px 30px rgba(0,0,0,.20);
+  color: var(--text);
+  padding: 24px;
+}
+
 .menu-hotspot {
   position: fixed; left: 0; top: 0; width: 22px; height: 100vh;
   z-index: 1050; background: transparent; cursor: pointer;
@@ -209,7 +218,48 @@ h1, h2, h3, h4, h5, .navbar, .side-menu, .tagline { font-family: 'Rajdhani', san
 .site-footer a:hover { color: #fff; }
 .footer-separator { margin: 0 .45rem; opacity: .45; }
 
-.card { border-color: rgba(143,122,69,.25); }
+.product-toolbar {
+  background: rgba(20, 16, 12, 0.26);
+  border: 1px solid rgba(241,223,173,.18);
+  border-radius: 18px;
+  box-shadow: 0 8px 18px rgba(0,0,0,.12);
+  padding: 0.8rem 1rem;
+}
+.product-toolbar .form-control,
+.product-toolbar .form-select,
+.form-select,
+.form-control {
+  background: rgba(23, 18, 14, 0.55);
+  border: 1px solid rgba(241,223,173,.22);
+  color: #fff;
+}
+.product-toolbar .form-control::placeholder,
+.form-control::placeholder {
+  color: rgba(245,241,229,.7);
+}
+.form-select option {
+  background: #2a241b;
+  color: #fff;
+}
+
+.card {
+  border-color: rgba(241,223,173,.22);
+  background: linear-gradient(180deg, rgba(47,38,28,0.92), rgba(80,67,46,0.88));
+  color: var(--text);
+  box-shadow: 0 10px 22px rgba(0,0,0,.15);
+}
+.product-card .card {
+  overflow: hidden;
+  height: 100%;
+}
+.product-card .card a {
+  color: var(--text);
+}
+.product-card .card .text-muted,
+.product-card .card small,
+.product-card .card .text-primary {
+  color: rgba(241,223,173,.9) !important;
+}
 .product-image { height: 240px; width: 100%; object-fit: contain; background: rgba(0,0,0,.05); }
 
 .auth-page { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px; }
@@ -225,3 +275,78 @@ h1, h2, h3, h4, h5, .navbar, .side-menu, .tagline { font-family: 'Rajdhani', san
 .with-sidebar .container { position: relative; z-index: 1060; }
 
 .with-sidebar .card { position: relative; z-index: 1065; }
+
+.admin-stat-card {
+  background: linear-gradient(135deg, rgba(18, 15, 11, 0.86), rgba(108, 90, 52, 0.9));
+  border: 1px solid rgba(241, 223, 173, 0.26);
+  border-radius: 16px;
+  padding: 1.2rem 1.1rem;
+  min-height: 150px;
+  box-shadow: 0 12px 28px rgba(0,0,0,0.18);
+}
+.admin-stat-card .label {
+  font-size: .82rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: rgba(241, 223, 173, 0.82);
+}
+.admin-stat-card .value {
+  font-size: clamp(1.9rem, 2.5vw, 2.7rem);
+  font-weight: 700;
+  margin: 0.5rem 0;
+  line-height: 1.1;
+}
+.admin-stat-card .trend {
+  color: rgba(245, 241, 229, 0.76);
+  font-size: .78rem;
+  letter-spacing: .04em;
+}
+.admin-stat-card .trend.positive { color: #d8f7b9; }
+
+.admin-panel-card {
+  border-radius: 18px;
+  border: 1px solid rgba(241, 223, 173, 0.18);
+  background: linear-gradient(180deg, rgba(31, 27, 20, 0.92), rgba(77, 66, 42, 0.82));
+}
+.chart-row {
+  display: grid;
+  grid-template-columns: 120px minmax(0, 1fr) 38px;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+.chart-row.compact { margin-bottom: .8rem; }
+.chart-label {
+  font-size: .9rem;
+  color: rgba(245, 241, 229, 0.85);
+}
+.chart-bar-track {
+  width: 100%;
+  height: 12px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 999px;
+  overflow: hidden;
+  border: 1px solid rgba(241, 223, 173, 0.12);
+}
+.chart-bar {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #d9b96a 0%, #f3dfac 100%);
+}
+.chart-value {
+  text-align: right;
+  color: rgba(245, 241, 229, 0.8);
+  font-weight: 600;
+}
+.status-pending { background: linear-gradient(90deg, #f0b24d 0%, #f6d27f 100%); }
+.status-approved { background: linear-gradient(90deg, #7fbf6a 0%, #b9e39d 100%); }
+.status-completed { background: linear-gradient(90deg, #2f8d6b 0%, #80d4b0 100%); }
+.status-cancelled { background: linear-gradient(90deg, #b45a5f 0%, #e1969c 100%); }
+
+@media (max-width: 767px) {
+  .chart-row {
+    grid-template-columns: 90px minmax(0, 1fr) 30px;
+    gap: 0.5rem;
+  }
+}

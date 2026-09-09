@@ -115,6 +115,24 @@ function getUserByEmail(string $email): ?array
     return $user ?: null;
 }
 
+/** Finds a user by either email or their display-name username. */
+function getUserByLoginIdentifier(string $identifier): ?array
+{
+    global $pdo;
+    $identifier = trim($identifier);
+    if ($identifier === '') {
+        return null;
+    }
+
+    $stmt = $pdo->prepare('SELECT id, name, email, password, is_admin, created_at FROM users WHERE email = :email_identifier OR LOWER(name) = LOWER(:name_identifier) LIMIT 1');
+    $stmt->execute([
+        ':email_identifier' => $identifier,
+        ':name_identifier' => $identifier,
+    ]);
+    $user = $stmt->fetch(PDO::FETCH_ASSOC);
+    return $user ?: null;
+}
+
 /** Finds a user by database ID. */
 function getUserById(int $id): ?array
 {
@@ -222,11 +240,16 @@ function clearLoginAttempts(string $ip): void
 function loginUserById(int $id): void
 {
     global $pdo;
+
+    // A fresh login should replace any existing session state so a different
+    // account can sign in even when an admin session is currently active.
+    $_SESSION = [];
     session_regenerate_id(true);
     $_SESSION['user_id'] = $id;
+    $_SESSION['cart'] = [];
 
     $stmt = $pdo->prepare('SELECT is_admin FROM users WHERE id = :id LIMIT 1');
-    $stmt->execute(['id' => $id]);
+    $stmt->execute(['id' => $id]); 
     $row = $stmt->fetch(PDO::FETCH_ASSOC);
     $_SESSION['is_admin'] = !empty($row['is_admin']);
 }
