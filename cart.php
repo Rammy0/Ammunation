@@ -76,7 +76,7 @@ if (!empty($cart) && is_array($cart)) {
         <div class="alert alert-info">Your cart is empty.</div>
     <?php else: ?>
         <div class="table-responsive">
-            <table class="table align-middle">
+            <table class="table align-middle cart-table">
                 <thead><tr><th>Product</th><th>Quantity</th><th>Price</th><th>Subtotal</th><th>Actions</th></tr></thead>
                 <tbody>
                     <?php foreach ($items as $item): ?>

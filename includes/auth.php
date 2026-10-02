@@ -109,8 +109,18 @@ function sendJsonRedirect(string $url, int $status = 200): void
 function getUserByEmail(string $email): ?array
 {
     global $pdo;
-    $stmt = $pdo->prepare('SELECT id, name, email, password, is_admin, created_at FROM users WHERE email = :email LIMIT 1');
+    $stmt = $pdo->prepare('SELECT id, uname, email, password, is_admin, created_at FROM users WHERE email = :email LIMIT 1');
     $stmt->execute(['email' => $email]);
+    $user = $stmt->fetch(PDO::FETCH_ASSOC);
+    return $user ?: null;
+}
+
+/** Finds a user by username. */
+function getUserByUsername(string $username): ?array
+{
+    global $pdo;
+    $stmt = $pdo->prepare('SELECT id, uname, email, password, is_admin, created_at FROM users WHERE LOWER(uname) = LOWER(:username) LIMIT 1');
+    $stmt->execute(['username' => trim($username)]);
     $user = $stmt->fetch(PDO::FETCH_ASSOC);
     return $user ?: null;
 }
@@ -124,7 +134,7 @@ function getUserByLoginIdentifier(string $identifier): ?array
         return null;
     }
 
-    $stmt = $pdo->prepare('SELECT id, name, email, password, is_admin, created_at FROM users WHERE email = :email_identifier OR LOWER(name) = LOWER(:name_identifier) LIMIT 1');
+    $stmt = $pdo->prepare('SELECT id, uname, email, password, is_admin, created_at FROM users WHERE email = :email_identifier OR LOWER(uname) = LOWER(:name_identifier) LIMIT 1');
     $stmt->execute([
         ':email_identifier' => $identifier,
         ':name_identifier' => $identifier,
@@ -137,7 +147,7 @@ function getUserByLoginIdentifier(string $identifier): ?array
 function getUserById(int $id): ?array
 {
     global $pdo;
-    $stmt = $pdo->prepare('SELECT id, name, email, is_admin, created_at FROM users WHERE id = :id LIMIT 1');
+    $stmt = $pdo->prepare('SELECT id, uname, email, is_admin, created_at FROM users WHERE id = :id LIMIT 1');
     $stmt->execute(['id' => $id]);
     $user = $stmt->fetch(PDO::FETCH_ASSOC);
     return $user ?: null;
@@ -148,9 +158,9 @@ function createUser(string $name, string $email, string $password): bool
 {
     global $pdo;
     $hash = password_hash($password, PASSWORD_DEFAULT);
-    $stmt = $pdo->prepare('INSERT INTO users (name, email, password) VALUES (:name, :email, :password)');
+    $stmt = $pdo->prepare('INSERT INTO users (uname, email, password) VALUES (:name, :email, :password)');
     try {
-        return (bool)$stmt->execute(['name' => $name, 'email' => $email, 'password' => $hash]);
+        return (bool)$stmt->execute(['uname' => $name, 'email' => $email, 'password' => $hash]);
     } catch (PDOException $e) {
         // Handle duplicate email (unique constraint)
         if ($e->getCode() === '23000') {
@@ -280,11 +290,11 @@ function updateUser(int $id, string $name, string $email, ?string $password = nu
 
     if ($password !== null && $password !== '') {
         $hash = password_hash($password, PASSWORD_DEFAULT);
-        $stmt = $pdo->prepare('UPDATE users SET name = :name, email = :email, password = :password WHERE id = :id');
-        $ok = $stmt->execute(['name' => $name, 'email' => $email, 'password' => $hash, 'id' => $id]);
+        $stmt = $pdo->prepare('UPDATE users SET uname = :name, email = :email, password = :password WHERE id = :id');
+        $ok = $stmt->execute(['uname' => $name, 'email' => $email, 'password' => $hash, 'id' => $id]);
     } else {
-        $stmt = $pdo->prepare('UPDATE users SET name = :name, email = :email WHERE id = :id');
-        $ok = $stmt->execute(['name' => $name, 'email' => $email, 'id' => $id]);
+        $stmt = $pdo->prepare('UPDATE users SET uname = :name, email = :email WHERE id = :id');
+        $ok = $stmt->execute(['uname' => $name, 'email' => $email, 'id' => $id]);
     }
 
     return ['success' => (bool)$ok];

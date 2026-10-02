@@ -248,6 +248,35 @@ h1, h2, h3, h4, h5, .navbar, .side-menu, .tagline { font-family: 'Rajdhani', san
   color: var(--text);
   box-shadow: none;
 }
+.profile-cart-table,
+.cart-table {
+  --bs-table-bg: transparent;
+  --bs-table-bg-type: transparent;
+  --bs-table-bg-state: transparent;
+  --bs-table-accent-bg: transparent;
+  --bs-table-color: var(--text);
+  --bs-table-border-color: rgba(241,223,173,.18);
+  color: var(--text);
+}
+.profile-cart-table > :not(caption) > * > *,
+.cart-table > :not(caption) > * > * {
+  background: transparent !important;
+  color: var(--text);
+  border-bottom-color: rgba(241,223,173,.18);
+  box-shadow: none !important;
+}
+.profile-cart-table thead > tr > *,
+.cart-table thead > tr > * {
+  color: var(--gold-light);
+}
+.profile-cart-table a,
+.cart-table a {
+  color: var(--gold-light);
+}
+.profile-cart-table a:hover,
+.cart-table a:hover {
+  color: #fff;
+}
 .product-card .card {
   overflow: hidden;
   height: 100%;

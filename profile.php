@@ -53,8 +53,8 @@ if (!empty($cart) && is_array($cart)) {
 <div class="container page-panel mt-4">
     <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4">
         <div>
-            <h1 class="mb-1">Welcome, <?php echo htmlspecialchars($user['name'] ?? ''); ?></h1>
-            <p class="text-muted mb-0">Manage your account and shopping cart.</p>
+            <!-- <h1 class="mb-1">Welcome, <?php //echo htmlspecialchars($user['uname'] ?? ''); ?></h1> -->
+            <p class="text mb-0">Manage your account and shopping cart.</p>
         </div>
         <div class="d-flex gap-2 mt-3 mt-md-0 flex-wrap">
             <a href="products.php" class="btn btn-primary">Continue shopping</a>
@@ -75,7 +75,7 @@ if (!empty($cart) && is_array($cart)) {
             <div class="card h-100">
                 <div class="card-body">
                     <h2 class="h4">Account overview</h2>
-                    <p class="mb-2"><strong>Name:</strong> <?php echo htmlspecialchars($user['name'] ?? ''); ?></p>
+                    <p class="mb-2"><strong>Name:</strong> <?php echo htmlspecialchars($user['uname'] ?? ''); ?></p>
                     <p class="mb-2"><strong>Email:</strong> <?php echo htmlspecialchars($user['email'] ?? ''); ?></p>
                     <p class="mb-3"><strong>Member since:</strong> <?php echo htmlspecialchars($user['created_at'] ?? ''); ?></p>
                     <a href="cart.php" class="btn btn-primary">View full cart (<?php echo count($cartItems); ?>)</a>
@@ -87,12 +87,18 @@ if (!empty($cart) && is_array($cart)) {
                 <div class="card-body">
                     <h2 class="h4">Your cart</h2>
                     <?php if (!$cartItems): ?>
-                        <p class="text-muted mb-3">Your cart is empty.</p>
+                        <p class="text mb-3">Your cart is empty.</p>
                         <a href="products.php" class="btn btn-outline-primary">Browse products</a>
                     <?php else: ?>
                         <div class="table-responsive">
-                            <table class="table table-sm align-middle mb-2">
-                                <thead><tr><th>Product</th><th>Qty</th><th class="text-end">Subtotal</th></tr></thead>
+                            <table class="table table-sm align-middle mb-2 profile-cart-table">
+                                <thead>
+                                    <tr>
+                                        <th>Product</th>
+                                        <th>Qty</th>
+                                        <th class="text-end">Subtotal</th>
+                                    </tr>
+                                </thead>
                                 <tbody>
                                     <?php foreach ($cartItems as $item): ?>
                                         <tr>
