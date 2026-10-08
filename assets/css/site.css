@@ -269,6 +269,14 @@ h1, h2, h3, h4, h5, .navbar, .side-menu, .tagline { font-family: 'Rajdhani', san
 .cart-table thead > tr > * {
   color: var(--gold-light);
 }
+.profile-cart-image {
+  display: block;
+  width: 52px;
+  height: 52px;
+  object-fit: contain;
+  border-radius: 6px;
+  background: rgba(23,18,14,.35);
+}
 .profile-cart-table a,
 .cart-table a {
   color: var(--gold-light);
@@ -276,6 +284,97 @@ h1, h2, h3, h4, h5, .navbar, .side-menu, .tagline { font-family: 'Rajdhani', san
 .profile-cart-table a:hover,
 .cart-table a:hover {
   color: #fff;
+}
+.cart-drawer {
+  --bs-offcanvas-width: min(440px, 100vw);
+  background: linear-gradient(180deg, #302719 0%, #4d412b 100%);
+  color: var(--text);
+  border-left: 1px solid rgba(241,223,173,.24);
+}
+.cart-drawer .offcanvas-header {
+  border-bottom: 1px solid rgba(241,223,173,.2);
+}
+.cart-drawer .offcanvas-title {
+  color: var(--gold-light);
+  font-size: 1.6rem;
+}
+.cart-drawer .offcanvas-body {
+  display: flex;
+  flex-direction: column;
+}
+.cart-drawer-content {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+}
+.cart-drawer-items {
+  flex: 1;
+}
+.cart-drawer-item {
+  display: grid;
+  grid-template-columns: 70px minmax(0, 1fr) auto;
+  align-items: start;
+  gap: .35rem .8rem;
+  padding: 1rem 0;
+  border-bottom: 1px solid rgba(241,223,173,.18);
+}
+.cart-drawer-item-image {
+  width: 70px;
+  height: 70px;
+  object-fit: contain;
+  border-radius: 8px;
+  background: rgba(23,18,14,.45);
+}
+.cart-drawer-item-info h3 {
+  margin: 0;
+  font-size: 1.1rem;
+}
+.cart-drawer-item-info { min-width: 0; }
+.cart-drawer-item-info h3 {
+  overflow-wrap: anywhere;
+}
+.cart-drawer-item-info p,
+.cart-drawer-note {
+  color: rgba(245,241,229,.7);
+  font-size: .88rem;
+  margin: .25rem 0 0;
+}
+.cart-drawer-item-subtotal {
+  font-weight: 700;
+  white-space: nowrap;
+}
+.cart-drawer-controls {
+  grid-column: 2 / -1;
+  display: flex;
+  align-items: center;
+  gap: .55rem;
+}
+.cart-drawer-controls form { margin: 0; }
+.cart-drawer-controls button {
+  min-width: 32px;
+  min-height: 32px;
+  border: 1px solid rgba(241,223,173,.35);
+  border-radius: 5px;
+  background: rgba(23,18,14,.35);
+  color: var(--text);
+}
+.cart-drawer-controls .remove-item {
+  border-color: transparent;
+  background: transparent;
+  color: #ffb7b7;
+  font-size: .88rem;
+  text-decoration: underline;
+}
+.cart-drawer-total {
+  display: flex;
+  justify-content: space-between;
+  padding: 1rem 0;
+  border-top: 1px solid rgba(241,223,173,.22);
+  font-size: 1.15rem;
+}
+.cart-drawer-note {
+  margin: .9rem 0 0;
+  text-align: center;
 }
 .product-card .card {
   overflow: hidden;

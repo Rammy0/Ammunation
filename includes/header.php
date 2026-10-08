@@ -41,8 +41,8 @@ if (!empty($_SESSION['cart']) && is_array($_SESSION['cart'])) {
             <ul class="navbar-nav ms-auto align-items-lg-center">
                 <?php if (isLoggedIn()): ?>
                     <li class="nav-item ms-lg-2">
-                        <a class="btn btn-outline-light btn-sm" href="cart.php">
-                            Cart<?php if ($cartCount > 0): ?> <span class="badge bg-danger"><?php echo $cartCount; ?></span><?php endif; ?>
+                        <a class="btn btn-outline-light btn-sm" href="#cartDrawer" data-bs-toggle="offcanvas" aria-controls="cartDrawer">
+                            &#x1F6D2 Cart <span id="cartCountBadge" class="badge bg-danger"<?php echo $cartCount > 0 ? '' : ' hidden'; ?>><?php echo $cartCount; ?></span>
                         </a>
                     </li>
                     <li class="nav-item ms-lg-2 mt-2 mt-lg-0">
@@ -58,6 +58,18 @@ if (!empty($_SESSION['cart']) && is_array($_SESSION['cart'])) {
     </div>
 </nav>  
 
+<?php if (isLoggedIn()): ?>
+<div class="offcanvas offcanvas-end cart-drawer" tabindex="-1" id="cartDrawer" aria-labelledby="cartDrawerLabel">
+    <div class="offcanvas-header">
+        <h2 class="offcanvas-title" id="cartDrawerLabel">Your cart</h2>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas" aria-label="Close cart"></button>
+    </div>
+    <div class="offcanvas-body" id="cartDrawerContent" aria-live="polite">
+        <p class="text-muted">Loading cart…</p>
+    </div>
+</div>
+<?php endif; ?>
+
 <div id="menuHotspot" class="menu-hotspot" aria-label="Open navigation menu" title="Open menu"></div>
 
 <aside id="sideMenu" class="side-menu collapsed" aria-label="Site navigation">
@@ -72,7 +84,7 @@ if (!empty($_SESSION['cart']) && is_array($_SESSION['cart'])) {
             <a class="nav-link" href="index.php">Home</a>
             <a class="nav-link" href="products.php">Products</a>
             <a class="nav-link" href="#">Orders</a>
-            <a class="nav-link" href="cart.php">Cart</a>
+            <?php if (isLoggedIn()): ?><a class="nav-link" href="#cartDrawer" data-bs-toggle="offcanvas" aria-controls="cartDrawer">Cart</a><?php endif; ?>
 
             <?php
             $menuCategories = [

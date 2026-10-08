@@ -9,6 +9,34 @@ $success = false;
 $cartItems = [];
 $cartTotal = 0.0;
 
+function profileCartImagePath(array $product): string
+{
+    foreach (['image', 'image_path', 'image_filename', 'photo', 'thumbnail'] as $column) {
+        if (empty($product[$column])) {
+            continue;
+        }
+
+        $storedPath = str_replace('\\', '/', (string)$product[$column]);
+        $filename = basename($storedPath);
+        $extension = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
+        if (!in_array($extension, ['png', 'jpg', 'jpeg', 'webp', 'gif', 'svg'], true)) {
+            continue;
+        }
+
+        if (strpos($storedPath, 'assets/images/') === 0) {
+            return $storedPath;
+        }
+
+        if (strpos($storedPath, 'products/') === 0) {
+            return 'assets/images/' . $storedPath;
+        }
+
+        return 'assets/images/' . $filename;
+    }
+
+    return 'assets/images/placeholder.svg';
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST'){
     $name = trim($_POST['name'] ?? '');
     $email = trim($_POST['email'] ?? '');
@@ -38,7 +66,7 @@ if (!empty($cart) && is_array($cart)) {
     }));
     if ($cartIds) {
         $placeholders = implode(',', array_fill(0, count($cartIds), '?'));
-        $stmt = $pdo->prepare("SELECT id, name, price FROM products WHERE id IN ($placeholders) AND status = 'available' ORDER BY name");
+        $stmt = $pdo->prepare("SELECT * FROM products WHERE id IN ($placeholders) AND status = 'available' ORDER BY name");
         $stmt->execute($cartIds);
         foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $product) {
             $quantity = max(1, (int)($cart[$product['id']] ?? 1));
@@ -78,7 +106,7 @@ if (!empty($cart) && is_array($cart)) {
                     <p class="mb-2"><strong>Name:</strong> <?php echo htmlspecialchars($user['uname'] ?? ''); ?></p>
                     <p class="mb-2"><strong>Email:</strong> <?php echo htmlspecialchars($user['email'] ?? ''); ?></p>
                     <p class="mb-3"><strong>Member since:</strong> <?php echo htmlspecialchars($user['created_at'] ?? ''); ?></p>
-                    <a href="cart.php" class="btn btn-primary">View full cart (<?php echo count($cartItems); ?>)</a>
+                    <a href="#cartDrawer" data-bs-toggle="offcanvas" aria-controls="cartDrawer" class="btn btn-primary">View cart (<?php echo count($cartItems); ?>)</a>
                 </div>
             </div>
         </div>
@@ -94,6 +122,7 @@ if (!empty($cart) && is_array($cart)) {
                             <table class="table table-sm align-middle mb-2 profile-cart-table">
                                 <thead>
                                     <tr>
+                                        <th aria-label="Image"></th>
                                         <th>Product</th>
                                         <th>Qty</th>
                                         <th class="text-end">Subtotal</th>
@@ -102,6 +131,13 @@ if (!empty($cart) && is_array($cart)) {
                                 <tbody>
                                     <?php foreach ($cartItems as $item): ?>
                                         <tr>
+                                            <td>
+                                                <img
+                                                    class="profile-cart-image"
+                                                    src="<?php echo htmlspecialchars(profileCartImagePath($item['product']), ENT_QUOTES, 'UTF-8'); ?>"
+                                                    alt="<?php echo htmlspecialchars($item['product']['name'], ENT_QUOTES, 'UTF-8'); ?>"
+                                                >
+                                            </td>
                                             <td><a href="product.php?id=<?php echo (int)$item['product']['id']; ?>"><?php echo htmlspecialchars($item['product']['name']); ?></a></td>
                                             <td><?php echo $item['quantity']; ?></td>
                                             <td class="text-end">₱<?php echo number_format($item['subtotal'], 2); ?></td>
@@ -114,7 +150,7 @@ if (!empty($cart) && is_array($cart)) {
                             <span>Total</span>
                             <span>₱<?php echo number_format($cartTotal, 2); ?></span>
                         </div>
-                        <a href="cart.php" class="btn btn-primary">Review cart</a>
+                        <a href="#cartDrawer" data-bs-toggle="offcanvas" aria-controls="cartDrawer" class="btn btn-primary">Review cart</a>
                     <?php endif; ?>
                 </div>
             </div>

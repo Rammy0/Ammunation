@@ -1,4 +1,66 @@
 $(function () {
+    var cartDrawer = document.getElementById('cartDrawer');
+    var cartDrawerContent = document.getElementById('cartDrawerContent');
+
+    if (cartDrawer && cartDrawerContent) {
+        function refreshCartDrawer() {
+            cartDrawerContent.innerHTML = '<p class="text-muted">Loading cart…</p>';
+            fetch('cart_panel.php', { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+                .then(function (response) {
+                    if (!response.ok) throw new Error('Unable to load your cart.');
+                    return response.text();
+                })
+                .then(function (html) {
+                    cartDrawerContent.innerHTML = html;
+                    var content = cartDrawerContent.querySelector('[data-cart-count]');
+                    var badge = document.getElementById('cartCountBadge');
+                    if (content && badge) {
+                        var count = Number(content.getAttribute('data-cart-count')) || 0;
+                        badge.textContent = count;
+                        badge.hidden = count === 0;
+                    }
+                })
+                .catch(function (error) {
+                    cartDrawerContent.innerHTML = '<p class="text-danger"></p>';
+                    cartDrawerContent.querySelector('.text-danger').textContent = error.message;
+                });
+        }
+
+        cartDrawer.addEventListener('shown.bs.offcanvas', refreshCartDrawer);
+        cartDrawerContent.addEventListener('submit', function (event) {
+            var form = event.target.closest('.cart-drawer-action');
+            if (!form) return;
+            event.preventDefault();
+
+            fetch(form.action, {
+                method: 'POST',
+                body: new FormData(form),
+                headers: { 'X-Requested-With': 'XMLHttpRequest' }
+            })
+                .then(function (response) {
+                    return response.json().then(function (data) {
+                        if (!response.ok) throw new Error(data.error || 'Unable to update your cart.');
+                        return data;
+                    });
+                })
+                .then(refreshCartDrawer)
+                .catch(function (error) {
+                    var message = document.createElement('p');
+                    message.className = 'alert alert-danger';
+                    message.textContent = error.message;
+                    cartDrawerContent.prepend(message);
+                });
+        });
+
+        if (new URLSearchParams(window.location.search).has('open_cart')) {
+            bootstrap.Offcanvas.getOrCreateInstance(cartDrawer).show();
+            var cleanUrl = new URL(window.location.href);
+            cleanUrl.searchParams.delete('open_cart');
+            cleanUrl.searchParams.delete('buy_now');
+            window.history.replaceState({}, '', cleanUrl);
+        }
+    }
+
     var $menu = $('#sideMenu');
     var $hotspot = $('#menuHotspot');
 

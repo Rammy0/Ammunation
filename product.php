@@ -1,5 +1,5 @@
 <?php
-require_once __DIR__ . '/includes/header.php';
+require_once __DIR__ . '/includes/auth.php';
 
 $id = isset($_GET['id']) ? (int)$_GET['id'] : null;
 $slug = isset($_GET['slug']) ? trim($_GET['slug']) : null;
@@ -8,7 +8,7 @@ $site_base_url = isset($site_base_url) ? $site_base_url : 'http' . (isset($_SERV
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cart_action'])) {
     $productId = (int)($_POST['product_id'] ?? 0);
-    $returnUrl = $productId > 0 ? 'product.php?id=' . urlencode((string)$productId) : 'products.php';
+    $returnUrl = $productId > 0 ? 'product.php?id=' . urlencode((string)$productId) . '&open_cart=1' : 'products.php?open_cart=1';
 
     if (!isLoggedIn()) {
         header('Location: login.php?redirect=' . rawurlencode($returnUrl));
@@ -33,7 +33,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cart_action'])) {
     $_SESSION['cart'][$productId] = ((int)($_SESSION['cart'][$productId] ?? 0)) + 1;
 
     if ($_POST['cart_action'] === 'buy_now') {
-        header('Location: cart.php?buy_now=1');
+        header('Location: ' . $returnUrl . '&buy_now=1');
         exit;
     }
 
@@ -91,6 +91,7 @@ function productImagePath(array $p): string {
     return 'assets/images/placeholder.svg';
 }
 
+require_once __DIR__ . '/includes/header.php';
 ?>
 
 <div class="container page-panel mt-4">

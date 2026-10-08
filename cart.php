@@ -1,7 +1,6 @@
 <?php
 require_once __DIR__ . '/includes/auth.php';
 requireLogin();
-require_once __DIR__ . '/includes/header.php';
 
 $cart = $_SESSION['cart'] ?? [];
 $cartAction = (string)($_POST['cart_action'] ?? '');
@@ -62,6 +61,8 @@ if (!empty($cart) && is_array($cart)) {
         }
     }
 }
+
+require_once __DIR__ . '/includes/header.php';
 ?>
 
 <div class="container page-panel mt-4">

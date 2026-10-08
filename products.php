@@ -1,12 +1,17 @@
 <?php
-require_once __DIR__ . '/includes/header.php';
+require_once __DIR__ . '/includes/auth.php';
 
 $search = trim((string)($_GET['q'] ?? ''));
 $categoryId = (int)($_GET['category'] ?? 0);
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cart_action'])) {
     if (!isLoggedIn()) {
-        header('Location: login.php?redirect=' . rawurlencode('products.php'));
+        $returnUrl = 'products.php?' . http_build_query([
+            'q' => $search,
+            'category' => $categoryId,
+            'open_cart' => 1,
+        ]);
+        header('Location: login.php?redirect=' . rawurlencode($returnUrl));
         exit;
     }
 
@@ -29,11 +34,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cart_action'])) {
     $_SESSION['cart'][$productId] = ((int)($_SESSION['cart'][$productId] ?? 0)) + 1;
 
     if ($_POST['cart_action'] === 'buy_now') {
-        header('Location: cart.php?buy_now=1');
+        header('Location: products.php?' . http_build_query([
+            'q' => $search,
+            'category' => $categoryId,
+            'open_cart' => 1,
+            'buy_now' => 1,
+        ]));
         exit;
     }
 
-    header('Location: products.php?' . http_build_query(['q' => $search, 'category' => $categoryId]));
+    header('Location: products.php?' . http_build_query([
+        'q' => $search,
+        'category' => $categoryId,
+        'open_cart' => 1,
+    ]));
     exit;
 }
 
@@ -96,13 +110,15 @@ function productImagePath($p){
     }
     return 'assets/images/placeholder.svg';
 }
+
+require_once __DIR__ . '/includes/header.php';
 ?>
 
 <div class="container page-panel mt-4">
     <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
         <div>
             <h1 class="mb-1">Products</h1>
-            <p class="text-muted mb-0">Find the right gear for your next move.</p>
+            <p class="text mb-0">Find the right gear for your next move.</p>
         </div>
         <form method="get" action="products.php" class="product-toolbar d-flex flex-row align-items-center gap-2" role="search">
             <label for="product-search" class="visually-hidden">Search products</label>
