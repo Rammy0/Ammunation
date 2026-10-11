@@ -105,8 +105,6 @@ $maxCategoryCount = $maxCategoryCount > 0 ? $maxCategoryCount : 1;
             <br>
             <br>
             <br>
-            <br>
-            <br>
             <center><span>&copy; <?php echo date('Y'); ?> Ammunation</span></center>
         </div>
     </nav>
@@ -115,7 +113,7 @@ $maxCategoryCount = $maxCategoryCount > 0 ? $maxCategoryCount : 1;
         <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
             <div>
                 <h1>ADMIN DASHBOARD</h1>
-                <p class="mb-0 text-muted">Welcome, <?php echo htmlspecialchars($user['name'] ?? 'Admin'); ?>.</p>
+                <!-- <p class="mb-0 text-muted">Welcome, <?php echo htmlspecialchars($user['name'] ?? 'Admin'); ?>.</p> -->
             </div>
             <div>
                 <a href="../index.php" class="btn btn-outline-light">Site</a>

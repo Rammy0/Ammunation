@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/includes/auth.php';
+require_once __DIR__ . '/includes/store_helpers.php';
 requireLogin();
 
 $cart = $_SESSION['cart'] ?? [];
@@ -42,25 +43,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $cartAction !== '') {
     exit;
 }
 
-$items = [];
-$total = 0.0;
-
-if (!empty($cart) && is_array($cart)) {
-    $ids = array_values(array_filter(array_map('intval', array_keys($cart)), static function (int $id): bool {
-        return $id > 0;
-    }));
-    if ($ids) {
-        $placeholders = implode(',', array_fill(0, count($ids), '?'));
-        $stmt = $pdo->prepare("SELECT id, name, price FROM products WHERE id IN ($placeholders) AND status = 'available'");
-        $stmt->execute($ids);
-        foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $product) {
-            $quantity = max(1, (int)($cart[$product['id']] ?? 1));
-            $subtotal = (float)$product['price'] * $quantity;
-            $items[] = ['product' => $product, 'quantity' => $quantity, 'subtotal' => $subtotal];
-            $total += $subtotal;
-        }
-    }
-}
+$summary = getStoreCartSummary(is_array($cart) ? $cart : []);
+$items = $summary['items'];
+$total = $summary['total'];
 
 require_once __DIR__ . '/includes/header.php';
 ?>

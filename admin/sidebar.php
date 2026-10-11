@@ -19,8 +19,8 @@ if (!empty($_SESSION['user_id'])) {
                 <span class="nav-link">Products</span>
                 <div id="productsMenu">
                     <ul class="nav flex-column ms-3 mt-2">
-                        <li class="nav-item mb-1"><a class="nav-link nav-sublink" href="products.php?action=add">Add Product</a></li>
-                        <li class="nav-item mb-1"><a class="nav-link nav-sublink" href="products.php">Manage Products</a></li>
+                        <li class="nav-item mb-1"><a class="nav-link nav-sublink" href="products.php?action=add"> U+279C Add Product</a></li>
+                        <li class="nav-item mb-1"><a class="nav-link nav-sublink" href="products.php"> U+279C Manage Products</a></li>
                     </ul>
                 </div>
             </li>

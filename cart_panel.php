@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/includes/auth.php';
+require_once __DIR__ . '/includes/store_helpers.php';
 
 if (!isLoggedIn()) {
     http_response_code(401);
@@ -7,56 +8,10 @@ if (!isLoggedIn()) {
 }
 
 $cart = $_SESSION['cart'] ?? [];
-$items = [];
-$total = 0.0;
-$cartCount = 0;
-
-function cartPanelImagePath(array $product): string
-{
-    foreach (['image', 'image_path', 'image_filename', 'photo', 'thumbnail'] as $column) {
-        if (empty($product[$column])) {
-            continue;
-        }
-
-        $storedPath = str_replace('\\', '/', (string)$product[$column]);
-        $filename = basename($storedPath);
-        $extension = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
-        if (!in_array($extension, ['png', 'jpg', 'jpeg', 'webp', 'gif', 'svg'], true)) {
-            continue;
-        }
-
-        if (strpos($storedPath, 'assets/images/') === 0) {
-            return $storedPath;
-        }
-
-        if (strpos($storedPath, 'products/') === 0) {
-            return 'assets/images/' . $storedPath;
-        }
-
-        return 'assets/images/' . $filename;
-    }
-
-    return 'assets/images/placeholder.svg';
-}
-
-if (is_array($cart) && $cart) {
-    $ids = array_values(array_filter(array_map('intval', array_keys($cart)), static function (int $id): bool {
-        return $id > 0;
-    }));
-    if ($ids) {
-        $placeholders = implode(',', array_fill(0, count($ids), '?'));
-        $stmt = $pdo->prepare("SELECT * FROM products WHERE id IN ($placeholders) AND status = 'available'");
-        $stmt->execute($ids);
-        foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $product) {
-            $productId = (int)$product['id'];
-            $quantity = max(1, (int)($cart[$productId] ?? 1));
-            $subtotal = (float)$product['price'] * $quantity;
-            $items[] = ['product' => $product, 'quantity' => $quantity, 'subtotal' => $subtotal];
-            $total += $subtotal;
-            $cartCount += $quantity;
-        }
-    }
-}
+$summary = getStoreCartSummary(is_array($cart) ? $cart : []);
+$items = $summary['items'];
+$total = $summary['total'];
+$cartCount = $summary['count'];
 ?>
 <div class="cart-drawer-content" data-cart-count="<?php echo $cartCount; ?>">
     <?php if (!$items): ?>
@@ -68,7 +23,7 @@ if (is_array($cart) && $cart) {
                 <article class="cart-drawer-item">
                     <img
                         class="cart-drawer-item-image"
-                        src="<?php echo htmlspecialchars(cartPanelImagePath($item['product']), ENT_QUOTES, 'UTF-8'); ?>"
+                        src="<?php echo htmlspecialchars(storeProductImageUrl($item['product']), ENT_QUOTES, 'UTF-8'); ?>"
                         alt="<?php echo htmlspecialchars($item['product']['name'], ENT_QUOTES, 'UTF-8'); ?>"
                     >
                     <div class="cart-drawer-item-info">

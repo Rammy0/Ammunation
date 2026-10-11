@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/includes/auth.php';
+require_once __DIR__ . '/includes/store_helpers.php';
 
 if (!isLoggedIn()) {
     sendJsonResponse(['error' => 'Please log in to manage your cart.'], 401);
@@ -39,9 +40,4 @@ if ($action === 'clear') {
     unset($_SESSION['cart'][$productId]);
 }
 
-$count = 0;
-foreach ($_SESSION['cart'] as $quantity) {
-    $count += max(0, (int)$quantity);
-}
-
-sendJsonResponse(['success' => true, 'count' => $count]);
+sendJsonResponse(['success' => true, 'count' => getStoreCartCount($_SESSION['cart'])]);

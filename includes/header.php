@@ -1,16 +1,13 @@
 <?php
 require_once __DIR__ . '/auth.php';
+require_once __DIR__ . '/store_helpers.php';
 
 $user = null;
 if (isLoggedIn()) {
     $user = getUserById((int)($_SESSION['user_id'] ?? 0));
 }
-$cartCount = 0;
-if (!empty($_SESSION['cart']) && is_array($_SESSION['cart'])) {
-    foreach ($_SESSION['cart'] as $quantity) {
-        $cartCount += max(0, (int)$quantity);
-    }
-}
+$cart = $_SESSION['cart'] ?? [];
+$cartCount = getStoreCartCount(is_array($cart) ? $cart : []);
 ?>
 <!DOCTYPE html>
 <html lang="en">

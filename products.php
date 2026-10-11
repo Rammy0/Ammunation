@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/includes/auth.php';
+require_once __DIR__ . '/includes/store_helpers.php';
 
 $search = trim((string)($_GET['q'] ?? ''));
 $categoryId = (int)($_GET['category'] ?? 0);
@@ -91,26 +92,6 @@ try {
     $categories = [];
 }
 
-function productImagePath($p){
-    // common column names to check
-    $candidates = ['image','image_path','image_filename','photo','thumbnail'];
-    $allowed_ext = ['png','jpg','jpeg','webp','gif','svg'];
-    foreach($candidates as $col){
-        if (!empty($p[$col])) {
-            $storedPath = str_replace('\\', '/', (string)$p[$col]);
-            if (strpos($storedPath, 'products/') === 0) {
-                return 'assets/images/' . ltrim($storedPath, '/');
-            }
-            $filename = basename($storedPath);
-            $ext = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
-            if (in_array($ext, $allowed_ext, true)) {
-                return 'assets/images/' . $filename;
-            }
-        }
-    }
-    return 'assets/images/placeholder.svg';
-}
-
 require_once __DIR__ . '/includes/header.php';
 ?>
 
@@ -156,11 +137,9 @@ require_once __DIR__ . '/includes/header.php';
                 data-category-name="<?php echo htmlspecialchars(strtolower((string)($prod['category_name'] ?? ''))); ?>"
             >
                 <div class="card h-100">
-                    <a href="product.php?id=<?php echo urlencode($prod['id']); ?>">
-                        <img src="<?php echo htmlspecialchars(productImagePath($prod) . '?v=' . (int)$prod['id']); ?>" class="card-img-top" alt="<?php echo htmlspecialchars($prod['name'] ?? 'Product'); ?>">
-                    </a>
+                    <img src="<?php echo htmlspecialchars(storeProductImageUrl($prod) . '?v=' . (int)$prod['id']); ?>" class="card-img-top" alt="<?php echo htmlspecialchars($prod['name'] ?? 'Product'); ?>">
                     <div class="card-body d-flex flex-column">
-                        <h5 class="card-title mb-1"><a href="product.php?id=<?php echo urlencode($prod['id']); ?>" class="text-decoration-none"><?php echo htmlspecialchars($prod['name'] ?? 'Untitled'); ?></a></h5>
+                        <h5 class="card-title mb-1"><?php echo htmlspecialchars($prod['name'] ?? 'Untitled'); ?></h5>
                         <?php if (!empty($prod['category_name'])): ?><small class="text-muted"><?php echo htmlspecialchars($prod['category_name']); ?></small><?php endif; ?>
                         <p class="mt-2 mb-0 text-truncate"><?php echo htmlspecialchars(substr($prod['description'] ?? '',0,120)); ?></p>
                         <div class="mt-auto pt-2">
