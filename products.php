@@ -7,12 +7,12 @@ $categoryId = (int)($_GET['category'] ?? 0);
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cart_action'])) {
     if (!isLoggedIn()) {
-        $returnUrl = 'products.php?' . http_build_query([
+        $returnUrl = withAuthContext('products.php?' . http_build_query([
             'q' => $search,
             'category' => $categoryId,
             'open_cart' => 1,
-        ]);
-        header('Location: login.php?redirect=' . rawurlencode($returnUrl));
+        ]));
+        header('Location: ' . withAuthContext('login.php?redirect=' . rawurlencode(withAuthContext($returnUrl))));
         exit;
     }
 
@@ -35,20 +35,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cart_action'])) {
     $_SESSION['cart'][$productId] = ((int)($_SESSION['cart'][$productId] ?? 0)) + 1;
 
     if ($_POST['cart_action'] === 'buy_now') {
-        header('Location: products.php?' . http_build_query([
+        header('Location: ' . withAuthContext('products.php?' . http_build_query([
             'q' => $search,
             'category' => $categoryId,
             'open_cart' => 1,
             'buy_now' => 1,
-        ]));
+        ])));
         exit;
     }
 
-    header('Location: products.php?' . http_build_query([
+    header('Location: ' . withAuthContext('products.php?' . http_build_query([
         'q' => $search,
         'category' => $categoryId,
         'open_cart' => 1,
-    ]));
+    ])));
     exit;
 }
 
@@ -144,7 +144,7 @@ require_once __DIR__ . '/includes/header.php';
                         <p class="mt-2 mb-0 text-truncate"><?php echo htmlspecialchars(substr($prod['description'] ?? '',0,120)); ?></p>
                         <div class="mt-auto pt-2">
                             <?php if (isset($prod['price'])): ?><strong class="text-primary">₱<?php echo number_format((float)$prod['price'],2); ?></strong><?php endif; ?>
-                            <?php if (isLoggedIn()): ?>
+                            <?php if (isLoggedIn() && !isAdmin()): ?>
                                 <div class="d-flex gap-2 mt-3">
                                     <form method="post">
                                         <?php echo csrfInputField('cart'); ?>
@@ -159,7 +159,7 @@ require_once __DIR__ . '/includes/header.php';
                                         <button type="submit" class="btn btn-primary btn-sm">Buy now</button>
                                     </form>
                                 </div>
-                            <?php else: ?>
+                            <?php elseif (!isLoggedIn()): ?>
                                 <a href="login.php?redirect=<?php echo rawurlencode('products.php'); ?>" class="btn btn-outline-secondary btn-sm mt-3">Log in to buy</a>
                             <?php endif; ?>
                         </div>

@@ -5,6 +5,9 @@ require_once __DIR__ . '/includes/store_helpers.php';
 if (!isLoggedIn()) {
     sendJsonResponse(['error' => 'Please log in to manage your cart.'], 401);
 }
+if (isAdmin()) {
+    sendJsonResponse(['error' => 'Admin accounts do not have a shopping cart.'], 403);
+}
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     sendJsonResponse(['error' => 'Invalid cart request.'], 405);

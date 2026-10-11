@@ -71,6 +71,7 @@
       } else {
         main.innerHTML = page.content;
       }
+      if (window.applyAuthContext) window.applyAuthContext(getMain());
       if (page.title) document.title = page.title;
     }
 
@@ -126,6 +127,7 @@
         } else {
           main.innerHTML = page.content;
         }
+        if (window.applyAuthContext) window.applyAuthContext(getMain());
         if (page.title) document.title = page.title;
         runScripts(getMain());
       }

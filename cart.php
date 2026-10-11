@@ -2,6 +2,10 @@
 require_once __DIR__ . '/includes/auth.php';
 require_once __DIR__ . '/includes/store_helpers.php';
 requireLogin();
+if (isAdmin()) {
+    header('Location: ' . withAuthContext('admin/admin.php'));
+    exit;
+}
 
 $cart = $_SESSION['cart'] ?? [];
 $cartAction = (string)($_POST['cart_action'] ?? '');
@@ -39,7 +43,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $cartAction !== '') {
         }
     }
 
-    header('Location: cart.php');
+    header('Location: ' . withAuthContext('cart.php'));
     exit;
 }
 

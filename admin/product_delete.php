@@ -74,7 +74,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <link rel="stylesheet" href="../assets/css/bootstrap-5.3.8-dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="../assets/css/site.css">
 </head>
-<body class="with-sidebar">
+<body class="with-sidebar" data-auth-context="<?php echo htmlspecialchars(getAuthContextToken(), ENT_QUOTES, 'UTF-8'); ?>">
+<script src="../assets/js/auth-context.js" defer></script>
     <nav class="side-menu">
         <div class="p-4">
             <h5 class="mb-4">Admin Panel</h5>

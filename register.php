@@ -18,7 +18,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($password !== $password_confirm) $errors[] = 'Passwords do not match.';
         if (!$errors) {
             if (getUserByEmail($email)) $errors[] = 'An account with that email already exists.';
-            elseif (createUser($name, $email, $password)) { header('Location: login.php?registered=1'); exit; }
+            elseif (createUser($name, $email, $password)) { header('Location: ' . withAuthContext('login.php?registered=1')); exit; }
             else $errors[] = 'Failed to create account. Please try again.';
         }
     }
@@ -28,11 +28,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Register - Ammunation</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet"><link rel="stylesheet" href="assets/css/bootstrap-5.3.8-dist/css/bootstrap.min.css"><link rel="stylesheet" href="assets/css/site.css">
-</head><body class="auth-page"><div class="auth-card">
+<script src="assets/js/auth-context.js" defer></script>
+</head><body class="auth-page" data-auth-context="<?php echo htmlspecialchars(getAuthContextToken(), ENT_QUOTES, 'UTF-8'); ?>"><div class="auth-card">
 <div class="text-center mb-4"><img src="assets/images/Logo/AmmunationLogo.png" alt="Ammunation Logo" style="max-height:110px"><h1 class="mt-2">CREATE ACCOUNT</h1></div>
 <?php if ($errors): ?><div class="alert alert-danger"><ul class="mb-0"><?php foreach ($errors as $e): ?><li><?php echo htmlspecialchars($e); ?></li><?php endforeach; ?></ul></div><?php endif; ?>
 <form method="post">
 <?php echo csrfInputField('register'); ?>
+<?php echo authContextInputField(); ?>
 <div class="mb-3"><label class="form-label">Name</label><input type="text" name="name" class="form-control" value="<?php echo htmlspecialchars($name); ?>" required></div>
 <div class="mb-3"><label class="form-label">Email</label><input type="email" name="email" class="form-control" value="<?php echo htmlspecialchars($email); ?>" required></div>
 <div class="mb-3"><label class="form-label">Password</label><input type="password" name="password" class="form-control" minlength="8" required></div>

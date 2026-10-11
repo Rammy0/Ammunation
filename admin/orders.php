@@ -62,10 +62,11 @@ try {
     <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="../assets/css/bootstrap-5.3.8-dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="../assets/css/site.css">
-    <script src="../assets/js/ajax-nav.js" defer></script>
+    <script src="../assets/js/ajax-nav.js?v=20261011-tabs" defer></script>
+    <script src="../assets/js/auth-context.js" defer></script>
     <script src="../assets/css/bootstrap-5.3.8-dist/js/bootstrap.bundle.min.js" defer></script>
 </head>
-<body class="with-sidebar">
+<body class="with-sidebar" data-auth-context="<?php echo htmlspecialchars(getAuthContextToken(), ENT_QUOTES, 'UTF-8'); ?>">
     <nav class="side-menu" aria-label="Admin sidebar">
         <div class="side-inner">
             <div class="sidebar-brand">

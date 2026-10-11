@@ -20,9 +20,10 @@ $cartCount = getStoreCartCount(is_array($cart) ? $cart : []);
     <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="assets/css/bootstrap-5.3.8-dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="assets/css/site.css">
-    <script src="assets/js/ajax-nav.js" defer></script>
+    <script src="assets/js/ajax-nav.js?v=20261011-tabs" defer></script>
 </head>
-<body>
+<body data-auth-context="<?php echo htmlspecialchars(getAuthContextToken(), ENT_QUOTES, 'UTF-8'); ?>">
+<script src="assets/js/auth-context.js" defer></script>
 
 <nav class="navbar navbar-expand-lg site-navbar">
     <div class="container-fluid">
@@ -36,7 +37,7 @@ $cartCount = getStoreCartCount(is_array($cart) ? $cart : []);
 
         <div class="collapse navbar-collapse" id="navbarMain">
             <ul class="navbar-nav ms-auto align-items-lg-center">
-                <?php if (isLoggedIn()): ?>
+                <?php if (isLoggedIn() && !isAdmin()): ?>
                     <li class="nav-item ms-lg-2">
                         <a class="btn btn-outline-light btn-sm" href="#cartDrawer" data-bs-toggle="offcanvas" aria-controls="cartDrawer">
                             &#x1F6D2 Cart <span id="cartCountBadge" class="badge bg-danger"<?php echo $cartCount > 0 ? '' : ' hidden'; ?>><?php echo $cartCount; ?></span>
@@ -45,7 +46,7 @@ $cartCount = getStoreCartCount(is_array($cart) ? $cart : []);
                     <li class="nav-item ms-lg-2 mt-2 mt-lg-0">
                         <a class="btn btn-light btn-sm" href="profile.php">Profile</a>
                     </li>
-                <?php else: ?>
+                <?php elseif (!isLoggedIn()): ?>
                     <li class="nav-item ms-lg-2">
                         <a class="btn btn-light btn-sm" href="login.php">Login</a>
                     </li>
@@ -55,7 +56,7 @@ $cartCount = getStoreCartCount(is_array($cart) ? $cart : []);
     </div>
 </nav>  
 
-<?php if (isLoggedIn()): ?>
+<?php if (isLoggedIn() && !isAdmin()): ?>
 <div class="offcanvas offcanvas-end cart-drawer" tabindex="-1" id="cartDrawer" aria-labelledby="cartDrawerLabel">
     <div class="offcanvas-header">
         <h2 class="offcanvas-title" id="cartDrawerLabel">Your cart</h2>
@@ -81,7 +82,7 @@ $cartCount = getStoreCartCount(is_array($cart) ? $cart : []);
             <a class="nav-link" href="index.php">Home</a>
             <a class="nav-link" href="products.php">Products</a>
             <a class="nav-link" href="#">Orders</a>
-            <?php if (isLoggedIn()): ?><a class="nav-link" href="#cartDrawer" data-bs-toggle="offcanvas" aria-controls="cartDrawer">Cart</a><?php endif; ?>
+            <?php if (isLoggedIn() && !isAdmin()): ?><a class="nav-link" href="#cartDrawer" data-bs-toggle="offcanvas" aria-controls="cartDrawer">Cart</a><?php endif; ?>
 
             <?php
             $menuCategories = [
@@ -123,8 +124,8 @@ $cartCount = getStoreCartCount(is_array($cart) ? $cart : []);
                     <?php endforeach; ?>
                 </nav>
             </div>
-            <a class="nav-link" href="profile.php">My Account</a>
-            <a class="nav-link" href="register.php">Login/Register</a>
+            <?php if (!isAdmin()): ?><a class="nav-link" href="profile.php">My Account</a><?php endif; ?>
+            <?php if (!isLoggedIn()): ?><a class="nav-link" href="register.php">Login/Register</a><?php endif; ?>
             <a class="nav-link" href="#">Contact Us</a>
         </nav>
     </div>

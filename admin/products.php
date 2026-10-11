@@ -235,7 +235,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 sendJsonRedirect('products.php');
                             } else {
                                 // redirect to avoid resubmission
-                                header('Location: products.php');
+                                header('Location: ' . withAuthContext('products.php'));
                                 exit;
                             }
                         }
@@ -286,6 +286,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             } while (true);
 
             $imagePath = null;
+            $uploadDir = null;
             if (isset($_FILES['image']) && $_FILES['image']['error'] !== UPLOAD_ERR_NO_FILE) {
                 $file = $_FILES['image'];
 
@@ -412,8 +413,9 @@ if ($editId > 0 && $editProduct === null) {
     <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="../assets/css/bootstrap-5.3.8-dist/css/bootstrap.min.css"><link rel="stylesheet" href="../assets/css/site.css">
-    <script src="../assets/js/ajax-nav.js" defer></script>
-</head><body class="with-sidebar">
+    <script src="../assets/js/ajax-nav.js?v=20261011-tabs" defer></script>
+    <script src="../assets/js/auth-context.js" defer></script>
+</head><body class="with-sidebar" data-auth-context="<?php echo htmlspecialchars(getAuthContextToken(), ENT_QUOTES, 'UTF-8'); ?>">
     <nav class="side-menu" aria-label="Admin sidebar">
         <div class="side-inner">
             <div class="sidebar-brand">

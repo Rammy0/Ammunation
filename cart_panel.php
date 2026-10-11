@@ -6,6 +6,10 @@ if (!isLoggedIn()) {
     http_response_code(401);
     exit('Please log in to view your cart.');
 }
+if (isAdmin()) {
+    http_response_code(403);
+    exit('Admin accounts do not have a shopping cart.');
+}
 
 $cart = $_SESSION['cart'] ?? [];
 $summary = getStoreCartSummary(is_array($cart) ? $cart : []);

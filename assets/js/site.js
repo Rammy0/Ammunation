@@ -5,7 +5,10 @@ $(function () {
     if (cartDrawer && cartDrawerContent) {
         function refreshCartDrawer() {
             cartDrawerContent.innerHTML = '<p class="text-muted">Loading cart…</p>';
-            fetch('cart_panel.php', { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+            var contextToken = document.body.getAttribute('data-auth-context') || '';
+            var cartPanelUrl = new URL('cart_panel.php', window.location.href);
+            cartPanelUrl.searchParams.set('_ctx', contextToken);
+            fetch(cartPanelUrl.href, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
                 .then(function (response) {
                     if (!response.ok) throw new Error('Unable to load your cart.');
                     return response.text();
@@ -32,10 +35,15 @@ $(function () {
             if (!form) return;
             event.preventDefault();
 
+            var formData = new FormData(form);
+            formData.set('_ctx', document.body.getAttribute('data-auth-context') || '');
             fetch(form.action, {
                 method: 'POST',
-                body: new FormData(form),
-                headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-Auth-Context': document.body.getAttribute('data-auth-context') || ''
+                }
             })
                 .then(function (response) {
                     return response.json().then(function (data) {

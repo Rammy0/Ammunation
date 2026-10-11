@@ -20,6 +20,73 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
+$authContextToken = (string)($_GET['_ctx'] ?? $_POST['_ctx'] ?? $_SERVER['HTTP_X_AUTH_CONTEXT'] ?? '');
+if (!is_array($_SESSION['auth_contexts'] ?? null)) {
+    $_SESSION['auth_contexts'] = [];
+}
+$hasValidContext = preg_match('/^[a-f0-9]{64}$/', $authContextToken) === 1;
+if (!$hasValidContext) {
+    $authContextToken = bin2hex(random_bytes(32));
+    $legacySessionExists = empty($_SESSION['auth_contexts']) && !empty($_SESSION['user_id']);
+    $_SESSION['auth_contexts'][$authContextToken] = [
+        'user_id' => $legacySessionExists ? (int)$_SESSION['user_id'] : null,
+        'is_admin' => $legacySessionExists && !empty($_SESSION['is_admin']),
+        'cart' => $legacySessionExists && is_array($_SESSION['cart'] ?? null) ? $_SESSION['cart'] : [],
+    ];
+} elseif (!isset($_SESSION['auth_contexts'][$authContextToken])) {
+    $_SESSION['auth_contexts'][$authContextToken] = ['user_id' => null, 'is_admin' => false, 'cart' => []];
+}
+
+$_SESSION['user_id'] = $_SESSION['auth_contexts'][$authContextToken]['user_id'] ?? null;
+$_SESSION['is_admin'] = !empty($_SESSION['auth_contexts'][$authContextToken]['is_admin']);
+$_SESSION['cart'] = is_array($_SESSION['auth_contexts'][$authContextToken]['cart'] ?? null)
+    ? $_SESSION['auth_contexts'][$authContextToken]['cart']
+    : [];
+$GLOBALS['auth_context_token'] = $authContextToken;
+
+register_shutdown_function(static function () use ($authContextToken): void {
+    if (session_status() !== PHP_SESSION_ACTIVE || !isset($_SESSION['auth_contexts'][$authContextToken])) {
+        return;
+    }
+
+    $_SESSION['auth_contexts'][$authContextToken] = [
+        'user_id' => isset($_SESSION['user_id']) ? (int)$_SESSION['user_id'] : null,
+        'is_admin' => !empty($_SESSION['is_admin']),
+        'cart' => is_array($_SESSION['cart'] ?? null) ? $_SESSION['cart'] : [],
+    ];
+});
+
+/** Returns the random authentication context assigned to this browser tab. */
+function getAuthContextToken(): string
+{
+    return (string)($GLOBALS['auth_context_token'] ?? '');
+}
+
+/** Returns a URL with the current tab's authentication context attached. */
+function withAuthContext(string $url): string
+{
+    $token = getAuthContextToken();
+    if ($token === '' || preg_match('/(?:^|[?&])_ctx=/', $url) === 1) {
+        return $url;
+    }
+
+    $fragment = '';
+    $fragmentPosition = strpos($url, '#');
+    if ($fragmentPosition !== false) {
+        $fragment = substr($url, $fragmentPosition);
+        $url = substr($url, 0, $fragmentPosition);
+    }
+
+    return $url . (strpos($url, '?') === false ? '?' : '&') . '_ctx=' . rawurlencode($token) . $fragment;
+}
+
+/** Returns a hidden field carrying this tab's authentication context. */
+function authContextInputField(): string
+{
+    return '<input type="hidden" name="_ctx" value="' .
+        htmlspecialchars(getAuthContextToken(), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') . '">';
+}
+
 /**
  * CSRF token helpers
  */
@@ -186,7 +253,7 @@ function requireLogin(): void
             sendJsonRedirect('/login.php', 401);
         }
 
-        header('Location: login.php');
+        header('Location: ' . withAuthContext('login.php'));
         exit;
     }
 }
@@ -246,35 +313,197 @@ function clearLoginAttempts(string $ip): void
     unset($_SESSION[$key]);
 }
 
-/** Starts an authenticated session for a user ID. */
-function loginUserById(int $id): void
+/** Creates the database lock used to enforce one active administrator session. */
+function ensureAdminSessionLock(): void
 {
     global $pdo;
 
-    // A fresh login should replace any existing session state so a different
-    // account can sign in even when an admin session is currently active.
-    $_SESSION = [];
-    session_regenerate_id(true);
-    $_SESSION['user_id'] = $id;
-    $_SESSION['cart'] = [];
+    $pdo->exec(
+        'CREATE TABLE IF NOT EXISTS admin_session_lock (
+            id TINYINT UNSIGNED NOT NULL PRIMARY KEY,
+            session_id VARCHAR(128) NULL,
+            user_id INT UNSIGNED NULL,
+            last_seen DATETIME NULL
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4'
+    );
+    $pdo->exec(
+        'INSERT INTO admin_session_lock (id, session_id, user_id, last_seen)
+         VALUES (1, NULL, NULL, NULL)
+         ON DUPLICATE KEY UPDATE id = 1'
+    );
+}
+
+/** Creates a lock identity unique to this tab as well as this PHP session. */
+function adminSessionLockKey(?string $sessionId = null): string
+{
+    return hash('sha256', ($sessionId ?? session_id()) . ':' . getAuthContextToken());
+}
+
+/** Reserves the single administrator slot for the current PHP session. */
+function reserveAdminSession(int $userId): bool
+{
+    global $pdo;
+
+    try {
+        ensureAdminSessionLock();
+        $pdo->beginTransaction();
+        $stmt = $pdo->query(
+            'SELECT session_id, (last_seen >= UTC_TIMESTAMP() - INTERVAL 30 MINUTE) AS active
+             FROM admin_session_lock WHERE id = 1 FOR UPDATE'
+        );
+        $lock = $stmt->fetch(PDO::FETCH_ASSOC);
+        $currentLockKey = adminSessionLockKey();
+
+        $legacyCurrentSession = !empty($lock['session_id']) && $lock['session_id'] === session_id();
+        if (!empty($lock['active']) && !empty($lock['session_id'])
+            && $lock['session_id'] !== $currentLockKey && !$legacyCurrentSession) {
+            $pdo->rollBack();
+            return false;
+        }
+
+        if (empty($_SESSION['auth_session_hardened'])) {
+            if (!session_regenerate_id(true)) {
+                $pdo->rollBack();
+                error_log('Unable to regenerate the session ID while reserving the admin session.');
+                return false;
+            }
+            $_SESSION['auth_session_hardened'] = true;
+        }
+
+        $stmt = $pdo->prepare(
+            'UPDATE admin_session_lock
+             SET session_id = :session_id, user_id = :user_id, last_seen = UTC_TIMESTAMP()
+             WHERE id = 1'
+        );
+        $stmt->execute(['session_id' => adminSessionLockKey(), 'user_id' => $userId]);
+        $pdo->commit();
+        return true;
+    } catch (Throwable $e) {
+        if ($pdo->inTransaction()) {
+            $pdo->rollBack();
+        }
+        error_log('Unable to reserve the admin session: ' . $e->getMessage());
+        return false;
+    }
+}
+
+/** Releases the administrator slot if it belongs to the current session. */
+function releaseAdminSession(?string $sessionId = null): void
+{
+    global $pdo;
+
+    $sessionId = $sessionId ?? session_id();
+    if (empty($_SESSION['is_admin']) || $sessionId === '') {
+        return;
+    }
+
+    try {
+        $stmt = $pdo->prepare(
+            'UPDATE admin_session_lock
+             SET session_id = NULL, user_id = NULL, last_seen = NULL
+             WHERE id = 1 AND (session_id = :session_key OR session_id = :legacy_session_id)'
+        );
+        $stmt->execute([
+            'session_key' => adminSessionLockKey($sessionId),
+            'legacy_session_id' => $sessionId,
+        ]);
+    } catch (Throwable $e) {
+        error_log('Unable to release the admin session lock: ' . $e->getMessage());
+    }
+}
+
+/** Refreshes the administrator lock while the administrator uses the site. */
+function refreshAdminSession(): bool
+{
+    global $pdo;
+
+    try {
+        $stmt = $pdo->prepare(
+            'UPDATE admin_session_lock
+             SET last_seen = UTC_TIMESTAMP()
+             WHERE id = 1 AND session_id = :session_id AND user_id = :user_id'
+        );
+        $stmt->execute([
+            'session_id' => adminSessionLockKey(),
+            'user_id' => (int)($_SESSION['user_id'] ?? 0),
+        ]);
+        if ($stmt->rowCount() === 1) {
+            return true;
+        }
+
+        $stmt = $pdo->prepare(
+            'UPDATE admin_session_lock
+             SET session_id = :session_key, last_seen = UTC_TIMESTAMP()
+             WHERE id = 1 AND session_id = :legacy_session_id AND user_id = :user_id
+               AND last_seen >= UTC_TIMESTAMP() - INTERVAL 30 MINUTE'
+        );
+        $stmt->execute([
+            'session_key' => adminSessionLockKey(),
+            'legacy_session_id' => session_id(),
+            'user_id' => (int)($_SESSION['user_id'] ?? 0),
+        ]);
+        if ($stmt->rowCount() === 1) {
+            return true;
+        }
+
+        $stmt = $pdo->prepare(
+            'SELECT 1 FROM admin_session_lock
+             WHERE id = 1 AND session_id = :session_id AND user_id = :user_id'
+        );
+        $stmt->execute([
+            'session_id' => adminSessionLockKey(),
+            'user_id' => (int)($_SESSION['user_id'] ?? 0),
+        ]);
+        return (bool)$stmt->fetchColumn();
+    } catch (Throwable $e) {
+        error_log('Unable to refresh the admin session lock: ' . $e->getMessage());
+        return false;
+    }
+}
+
+/** Starts an authenticated session for a user ID. */
+function loginUserById(int $id): bool
+{
+    global $pdo;
 
     $stmt = $pdo->prepare('SELECT is_admin FROM users WHERE id = :id LIMIT 1');
-    $stmt->execute(['id' => $id]); 
+    $stmt->execute(['id' => $id]);
     $row = $stmt->fetch(PDO::FETCH_ASSOC);
-    $_SESSION['is_admin'] = !empty($row['is_admin']);
+    if (!$row) {
+        return false;
+    }
+
+    $isAdmin = !empty($row['is_admin']);
+    if ($isAdmin && !reserveAdminSession($id)) {
+        return false;
+    }
+
+    if (!$isAdmin) {
+        releaseAdminSession();
+        if (empty($_SESSION['auth_session_hardened'])) {
+            if (!session_regenerate_id(true)) {
+                error_log('Unable to regenerate the session ID during login.');
+                return false;
+            }
+            $_SESSION['auth_session_hardened'] = true;
+        }
+    } else {
+        $_SESSION['auth_session_hardened'] = true;
+    }
+
+    $_SESSION['user_id'] = $id;
+    $_SESSION['is_admin'] = $isAdmin;
+    $_SESSION['cart'] = [];
+    return true;
 }
 
 /** Clears the authenticated session and session cookie. */
 function logout(): void
 {
-    $_SESSION = [];
-    if (ini_get('session.use_cookies')) {
-        $params = session_get_cookie_params();
-        setcookie(session_name(), '', time() - 42000,
-            $params['path'], $params['domain'], $params['secure'], $params['httponly']
-        );
-    }
-    session_destroy();
+    releaseAdminSession();
+    $_SESSION['user_id'] = null;
+    $_SESSION['is_admin'] = false;
+    $_SESSION['cart'] = [];
 }
 
 /** Updates account details and optionally replaces the password. */
@@ -322,7 +551,13 @@ function requireAdmin(): void
         if (isJsonRequest()) {
             sendJsonRedirect('/login.php', 403);
         }
-        header('Location: ../login.php');
+        header('Location: ' . withAuthContext('../login.php'));
+        exit;
+    }
+
+    if (!refreshAdminSession()) {
+        logout();
+        header('Location: ' . withAuthContext('login.php?session_expired=1'));
         exit;
     }
 }

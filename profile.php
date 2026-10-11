@@ -2,6 +2,10 @@
 require_once __DIR__ . '/includes/auth.php';
 require_once __DIR__ . '/includes/store_helpers.php';
 requireLogin();
+if (isAdmin()) {
+    header('Location: ' . withAuthContext('admin/admin.php'));
+    exit;
+}
 
 $userId = (int)($_SESSION['user_id'] ?? 0);
 $user = getUserById($userId);
@@ -23,6 +27,9 @@ require_once __DIR__ . '/includes/header.php';
             <a href="logout.php" class="btn btn-outline-light border border-light text-white">Log out</a>
         </div>
     </div>
+    <p class="small text mb-4">
+        <a href="login.php?new_context=1" target="_blank" rel="noopener">Sign in to another account in a new tab</a>
+    </p>
 
     <div class="row g-4">
         <div class="col-lg-5">
