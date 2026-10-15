@@ -9,6 +9,8 @@ if (isAdmin()) {
     sendJsonResponse(['error' => 'Admin accounts do not have a shopping cart.'], 403);
 }
 
+loadUserStoreCart((int)$_SESSION['user_id']);
+
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     sendJsonResponse(['error' => 'Invalid cart request.'], 405);
 }
@@ -41,6 +43,12 @@ if ($action === 'clear') {
     }
 } elseif ($action === 'remove') {
     unset($_SESSION['cart'][$productId]);
+}
+
+try {
+    saveUserStoreCart((int)$_SESSION['user_id'], $_SESSION['cart']);
+} catch (RuntimeException $e) {
+    sendJsonResponse(['error' => $e->getMessage()], 500);
 }
 
 sendJsonResponse(['success' => true, 'count' => getStoreCartCount($_SESSION['cart'])]);

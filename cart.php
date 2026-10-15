@@ -7,6 +7,7 @@ if (isAdmin()) {
     exit;
 }
 
+loadUserStoreCart((int)$_SESSION['user_id']);
 $cart = $_SESSION['cart'] ?? [];
 $cartAction = (string)($_POST['cart_action'] ?? '');
 
@@ -43,6 +44,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $cartAction !== '') {
         }
     }
 
+    try {
+        saveUserStoreCart((int)$_SESSION['user_id'], $_SESSION['cart']);
+    } catch (RuntimeException $e) {
+        http_response_code(500);
+        exit(htmlspecialchars($e->getMessage(), ENT_QUOTES, 'UTF-8'));
+    }
+
     header('Location: ' . withAuthContext('cart.php'));
     exit;
 }
@@ -59,9 +67,6 @@ require_once __DIR__ . '/includes/header.php';
         <h1 class="mb-0">Cart</h1>
         <a href="products.php" class="btn btn-primary px-4 py-2 shadow-sm">Back to products</a>
     </div>
-    <?php if (isset($_GET['buy_now'])): ?>
-        <div class="alert alert-success">Item added. Review your order below before checkout.</div>
-    <?php endif; ?>
     <?php if (!$items): ?>
         <div class="alert alert-info">Your cart is empty.</div>
     <?php else: ?>
@@ -105,13 +110,13 @@ require_once __DIR__ . '/includes/header.php';
             </table>
         </div>
         <h3 class="text-end">Total: ₱<?php echo number_format($total, 2); ?></h3>
-        <div class="d-flex justify-content-end gap-2">
+        <div class="d-flex justify-content-end align-items-center gap-2 flex-wrap">
             <form method="post">
                 <?php echo csrfInputField('cart'); ?>
                 <input type="hidden" name="cart_action" value="clear">
                 <button type="submit" class="btn btn-outline-danger">Clear cart</button>
             </form>
-            <p class="text-muted mb-0 align-self-center">Checkout is not yet available.</p>
+            <a href="<?php echo htmlspecialchars(withAuthContext('checkout.php'), ENT_QUOTES, 'UTF-8'); ?>" class="btn btn-success">Proceed to checkout</a>
         </div>
     <?php endif; ?>
 </div>

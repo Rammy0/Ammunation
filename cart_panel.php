@@ -11,6 +11,7 @@ if (isAdmin()) {
     exit('Admin accounts do not have a shopping cart.');
 }
 
+loadUserStoreCart((int)$_SESSION['user_id']);
 $cart = $_SESSION['cart'] ?? [];
 $summary = getStoreCartSummary(is_array($cart) ? $cart : []);
 $items = $summary['items'];
@@ -68,7 +69,6 @@ $cartCount = $summary['count'];
             <input type="hidden" name="cart_action" value="clear">
             <button type="submit" class="btn btn-outline-danger w-100">Clear cart</button>
         </form>
-        <button type="button" class="btn btn-success w-100 mt-2" disabled>Proceed to checkout</button>
-        <p class="cart-drawer-note">Checkout is not yet available.</p>
+        <a href="<?php echo htmlspecialchars(withAuthContext('checkout.php'), ENT_QUOTES, 'UTF-8'); ?>" class="btn btn-success w-100 mt-2">Proceed to checkout</a>
     <?php endif; ?>
 </div>

@@ -2,6 +2,10 @@
 require_once __DIR__ . '/includes/auth.php';
 require_once __DIR__ . '/includes/store_helpers.php';
 
+if (isLoggedIn() && !isAdmin()) {
+    loadUserStoreCart((int)$_SESSION['user_id']);
+}
+
 $search = trim((string)($_GET['q'] ?? ''));
 $categoryId = (int)($_GET['category'] ?? 0);
 
@@ -14,6 +18,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cart_action'])) {
         ]));
         header('Location: ' . withAuthContext('login.php?redirect=' . rawurlencode(withAuthContext($returnUrl))));
         exit;
+    }
+    if (isAdmin()) {
+        http_response_code(403);
+        exit('Admin accounts do not have a shopping cart.');
     }
 
     if (!validateCsrfToken((string)($_POST['csrf_token'] ?? ''), 'cart')) {
@@ -33,16 +41,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cart_action'])) {
         $_SESSION['cart'] = [];
     }
     $_SESSION['cart'][$productId] = ((int)($_SESSION['cart'][$productId] ?? 0)) + 1;
-
-    if ($_POST['cart_action'] === 'buy_now') {
-        header('Location: ' . withAuthContext('products.php?' . http_build_query([
-            'q' => $search,
-            'category' => $categoryId,
-            'open_cart' => 1,
-            'buy_now' => 1,
-        ])));
-        exit;
-    }
+    saveUserStoreCart((int)$_SESSION['user_id'], $_SESSION['cart']);
 
     header('Location: ' . withAuthContext('products.php?' . http_build_query([
         'q' => $search,
@@ -145,18 +144,12 @@ require_once __DIR__ . '/includes/header.php';
                         <div class="mt-auto pt-2">
                             <?php if (isset($prod['price'])): ?><strong class="text-primary">₱<?php echo number_format((float)$prod['price'],2); ?></strong><?php endif; ?>
                             <?php if (isLoggedIn() && !isAdmin()): ?>
-                                <div class="d-flex gap-2 mt-3">
+                                <div class="mt-3">
                                     <form method="post">
                                         <?php echo csrfInputField('cart'); ?>
                                         <input type="hidden" name="product_id" value="<?php echo (int)$prod['id']; ?>">
                                         <input type="hidden" name="cart_action" value="add">
                                         <button type="submit" class="btn btn-outline-primary btn-sm">Add to cart</button>
-                                    </form>
-                                    <form method="post">
-                                        <?php echo csrfInputField('cart'); ?>
-                                        <input type="hidden" name="product_id" value="<?php echo (int)$prod['id']; ?>">
-                                        <input type="hidden" name="cart_action" value="buy_now">
-                                        <button type="submit" class="btn btn-primary btn-sm">Buy now</button>
                                     </form>
                                 </div>
                             <?php elseif (!isLoggedIn()): ?>

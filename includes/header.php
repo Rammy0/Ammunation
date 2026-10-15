@@ -6,6 +6,9 @@ $user = null;
 if (isLoggedIn()) {
     $user = getUserById((int)($_SESSION['user_id'] ?? 0));
 }
+if (isLoggedIn() && !isAdmin()) {
+    loadUserStoreCart((int)$_SESSION['user_id']);
+}
 $cart = $_SESSION['cart'] ?? [];
 $cartCount = getStoreCartCount(is_array($cart) ? $cart : []);
 ?>
@@ -81,7 +84,7 @@ $cartCount = getStoreCartCount(is_array($cart) ? $cart : []);
         <nav class="nav flex-column">
             <a class="nav-link" href="index.php">Home</a>
             <a class="nav-link" href="products.php">Products</a>
-            <a class="nav-link" href="#">Orders</a>
+            <a class="nav-link" href="<?php echo htmlspecialchars(withAuthContext(isAdmin() ? 'admin/orders.php' : (isLoggedIn() ? 'my_orders.php' : 'login.php')), ENT_QUOTES, 'UTF-8'); ?>">Orders</a>
             <?php if (isLoggedIn() && !isAdmin()): ?><a class="nav-link" href="#cartDrawer" data-bs-toggle="offcanvas" aria-controls="cartDrawer">Cart</a><?php endif; ?>
 
             <?php

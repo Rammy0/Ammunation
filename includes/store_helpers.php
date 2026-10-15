@@ -26,6 +26,84 @@ function storeProductImageUrl(array $product): string
     return 'assets/images/placeholder.svg';
 }
 
+/** Loads a customer's cart from the database into the current tab's session context. */
+function loadUserStoreCart(int $userId): void
+{
+    global $pdo;
+
+    $stmt = $pdo->prepare('SELECT product_id, quantity FROM cart WHERE user_id = :user_id ORDER BY id');
+    $stmt->execute(['user_id' => $userId]);
+    $databaseCart = [];
+    foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $row) {
+        $productId = (int)$row['product_id'];
+        $quantity = (int)$row['quantity'];
+        if ($productId > 0 && $quantity > 0) {
+            $databaseCart[$productId] = ($databaseCart[$productId] ?? 0) + $quantity;
+        }
+    }
+
+    $token = getAuthContextToken();
+    $alreadyLoaded = isset($_SESSION['auth_contexts'][$token]['cart_database_user_id'])
+        && (int)$_SESSION['auth_contexts'][$token]['cart_database_user_id'] === $userId;
+    $legacyCart = $_SESSION['cart'] ?? [];
+
+    if (!$alreadyLoaded && !$databaseCart && is_array($legacyCart) && $legacyCart) {
+        saveUserStoreCart($userId, $legacyCart);
+        foreach ($_SESSION['auth_contexts'] as &$context) {
+            if ((int)($context['user_id'] ?? 0) === $userId) {
+                $context['cart_database_user_id'] = $userId;
+            }
+        }
+        unset($context);
+        return;
+    }
+
+    $_SESSION['cart'] = $databaseCart;
+    $_SESSION['auth_contexts'][$token]['cart_database_user_id'] = $userId;
+}
+
+/** Replaces a customer's persisted cart and updates the current tab's copy. */
+function saveUserStoreCart(int $userId, array $cart): void
+{
+    global $pdo;
+
+    $normalizedCart = [];
+    foreach ($cart as $productId => $quantity) {
+        $productId = (int)$productId;
+        $quantity = (int)$quantity;
+        if ($productId > 0 && $quantity > 0) {
+            $normalizedCart[$productId] = $quantity;
+        }
+    }
+
+    try {
+        $pdo->beginTransaction();
+        $stmt = $pdo->prepare('DELETE FROM cart WHERE user_id = :user_id');
+        $stmt->execute(['user_id' => $userId]);
+        $stmt = $pdo->prepare(
+            'INSERT INTO cart (user_id, product_id, quantity)
+             VALUES (:user_id, :product_id, :quantity)'
+        );
+        foreach ($normalizedCart as $productId => $quantity) {
+            $stmt->execute([
+                'user_id' => $userId,
+                'product_id' => $productId,
+                'quantity' => $quantity,
+            ]);
+        }
+        $pdo->commit();
+    } catch (Throwable $e) {
+        if ($pdo->inTransaction()) {
+            $pdo->rollBack();
+        }
+        error_log('Unable to save customer cart: ' . $e->getMessage());
+        throw new RuntimeException('Unable to save your cart. Please try again.', 0, $e);
+    }
+
+    $_SESSION['cart'] = $normalizedCart;
+    $_SESSION['auth_contexts'][getAuthContextToken()]['cart_database_user_id'] = $userId;
+}
+
 /** Builds a consistent cart summary from the current session cart. */
 function getStoreCartSummary(array $cart): array
 {

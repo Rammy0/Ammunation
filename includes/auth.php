@@ -53,6 +53,9 @@ register_shutdown_function(static function () use ($authContextToken): void {
         'user_id' => isset($_SESSION['user_id']) ? (int)$_SESSION['user_id'] : null,
         'is_admin' => !empty($_SESSION['is_admin']),
         'cart' => is_array($_SESSION['cart'] ?? null) ? $_SESSION['cart'] : [],
+        'cart_database_user_id' => isset($_SESSION['auth_contexts'][$authContextToken]['cart_database_user_id'])
+            ? (int)$_SESSION['auth_contexts'][$authContextToken]['cart_database_user_id']
+            : null,
     ];
 });
 
