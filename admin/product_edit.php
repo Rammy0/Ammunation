@@ -38,24 +38,24 @@ function slugify(string $value): string
     return $value !== '' ? $value : 'product';
 }
 
-/** Adds the product quantity column when an older schema does not have it. */
-function ensureProductQuantityColumn(): void
+/** Adds the stock column when it is missing from an older product schema. */
+function ensureProductStockColumn(): void
 {
     global $pdo;
 
     try {
         $columns = $pdo->query('SHOW COLUMNS FROM products')->fetchAll(PDO::FETCH_COLUMN);
-        if (in_array('quantity', $columns, true)) {
+        if (in_array('stock', $columns, true)) {
             return;
         }
 
-        $pdo->exec('ALTER TABLE products ADD COLUMN quantity INT NOT NULL DEFAULT 0 AFTER price');
+        $pdo->exec('ALTER TABLE products ADD COLUMN stock INT NOT NULL DEFAULT 0 AFTER price');
     } catch (Throwable $e) {
         // Ignore if the table is unavailable; the page will surface the underlying database error.
     }
 }
 
-ensureProductQuantityColumn();
+ensureProductStockColumn();
 
 $id = (int)($_GET['id'] ?? 0);
 $errors = [];
@@ -85,7 +85,7 @@ if ($id > 0 && $_SERVER['REQUEST_METHOD'] === 'POST') {
         $name = trim((string)($_POST['name'] ?? ''));
         $description = trim((string)($_POST['description'] ?? ''));
         $price = trim((string)($_POST['price'] ?? ''));
-        $quantity = trim((string)($_POST['quantity'] ?? ''));
+        $stock = trim((string)($_POST['stock'] ?? ''));
         $categoryId = (int)($_POST['category_id'] ?? 0);
 
         if ($name === '') {
@@ -97,8 +97,8 @@ if ($id > 0 && $_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($price === '' || !is_numeric($price) || (float)$price < 0) {
             $errors[] = 'Please enter a valid price.';
         }
-        if ($quantity === '' || !ctype_digit((string)$quantity) || (int)$quantity < 0) {
-            $errors[] = 'Please enter a valid quantity.';
+        if ($stock === '' || !ctype_digit($stock) || (int)$stock < 0) {
+            $errors[] = 'Please enter a valid stock amount.';
         }
 
         if (empty($errors)) {
@@ -155,14 +155,14 @@ if ($id > 0 && $_SERVER['REQUEST_METHOD'] === 'POST') {
 
             if (empty($errors)) {
                 try {
-                    $stmt = $pdo->prepare('UPDATE products SET category_id = :category_id, name = :name, slug = :slug, description = :description, price = :price, quantity = :quantity, image = :image WHERE id = :id');
+                    $stmt = $pdo->prepare('UPDATE products SET category_id = :category_id, name = :name, slug = :slug, description = :description, price = :price, stock = :stock, image = :image WHERE id = :id');
                     $stmt->execute([
                         'category_id' => $categoryId,
                         'name' => $name,
                         'slug' => $slug,
                         'description' => $description,
                         'price' => (float)$price,
-                        'quantity' => (int)$quantity,
+                        'stock' => (int)$stock,
                         'image' => $imagePath,
                         'id' => $id,
                     ]);
@@ -171,7 +171,7 @@ if ($id > 0 && $_SERVER['REQUEST_METHOD'] === 'POST') {
                     $product['name'] = $name;
                     $product['description'] = $description;
                     $product['price'] = $price;
-                    $product['quantity'] = (int)$quantity;
+                    $product['stock'] = (int)$stock;
                     $product['category_id'] = $categoryId;
                     $product['image'] = $imagePath;
                 } catch (Throwable $e) {
@@ -277,8 +277,8 @@ if ($id > 0 && $_SERVER['REQUEST_METHOD'] === 'POST') {
                                 <input type="number" step="0.01" min="0" name="price" class="form-control" value="<?php echo htmlspecialchars($product['price'] ?? ''); ?>" required>
                             </div>
                             <div class="col-md-3">
-                                <label class="form-label">Quantity</label>
-                                <input type="number" min="0" step="1" name="quantity" class="form-control" value="<?php echo htmlspecialchars((string)($product['quantity'] ?? 0)); ?>" required>
+                                <label class="form-label">Stock</label>
+                                <input type="number" min="0" step="1" name="stock" class="form-control" value="<?php echo htmlspecialchars((string)($product['stock'] ?? 0)); ?>" required>
                             </div>
                             <div class="col-12">
                                 <label class="form-label">Description</label>

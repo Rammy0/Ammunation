@@ -361,15 +361,17 @@ h1, h2, h3, h4, h5, .navbar, .side-menu, .tagline { font-family: 'Rajdhani', san
 }
 .order-history-item {
   display: grid;
-  grid-template-columns: 48px minmax(120px, 1fr) auto auto;
+  grid-template-columns: 65px minmax(120px, 1fr) auto auto;
   align-items: center;
   gap: .85rem;
   padding: .7rem 0;
   border-bottom: 1px solid rgba(241,223,173,.14);
 }
 .order-history-item img {
-  width: 48px;
-  height: 48px;
+  width: 65px;
+  height: 65px;
+  max-width: 65px;
+  max-height: 65px;
   object-fit: contain;
   border-radius: 7px;
   background: rgba(23,18,14,.3);
@@ -380,12 +382,14 @@ h1, h2, h3, h4, h5, .navbar, .side-menu, .tagline { font-family: 'Rajdhani', san
 }
 @media (max-width: 575.98px) {
   .order-history-item {
-    grid-template-columns: 42px minmax(100px, 1fr) auto;
+    grid-template-columns: 65px minmax(100px, 1fr) auto;
     gap: .55rem;
   }
   .order-history-item img {
-    width: 42px;
-    height: 42px;
+    width: 65px;
+    height: 65px;
+    max-width: 65px;
+    max-height: 65px;
   }
   .order-item-subtotal {
     grid-column: 2 / -1;

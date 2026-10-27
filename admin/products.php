@@ -13,7 +13,7 @@ $success = '';
 $name = '';
 $description = '';
 $price = '';
-$quantity = '';
+$stock = '';
 $categoryId = '';
 $editId = (int)($_GET['edit'] ?? 0);
 $editProduct = null;
@@ -65,25 +65,25 @@ function ensureProductSlugColumn(): void
     }
 }
 
-/** Adds the product quantity column when an older schema does not have it. */
-function ensureProductQuantityColumn(): void
+/** Adds the stock column when it is missing from an older product schema. */
+function ensureProductStockColumn(): void
 {
     global $pdo;
 
     try {
         $columns = $pdo->query('SHOW COLUMNS FROM products')->fetchAll(PDO::FETCH_COLUMN);
-        if (in_array('quantity', $columns, true)) {
+        if (in_array('stock', $columns, true)) {
             return;
         }
 
-        $pdo->exec('ALTER TABLE products ADD COLUMN quantity INT NOT NULL DEFAULT 0 AFTER price');
+        $pdo->exec('ALTER TABLE products ADD COLUMN stock INT NOT NULL DEFAULT 0 AFTER price');
     } catch (Throwable $e) {
         // The product flow will continue and surface a clearer error if the table is unavailable.
     }
 }
 
 ensureProductSlugColumn();
-ensureProductQuantityColumn();
+ensureProductStockColumn();
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Distinguish management actions from the upload form
@@ -101,7 +101,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $name = trim((string)($_POST['name'] ?? ''));
             $description = trim((string)($_POST['description'] ?? ''));
             $price = trim((string)($_POST['price'] ?? ''));
-            $quantity = trim((string)($_POST['quantity'] ?? ''));
+            $stock = trim((string)($_POST['stock'] ?? ''));
             $categoryId = (int)($_POST['category_id'] ?? 0);
 
             if (!$editProduct) {
@@ -112,8 +112,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $errors[] = 'Please select a category.';
             } elseif ($price === '' || !is_numeric($price) || (float)$price < 0) {
                 $errors[] = 'Please enter a valid price.';
-            } elseif ($quantity === '' || !ctype_digit($quantity) || (int)$quantity < 0) {
-                $errors[] = 'Please enter a valid quantity.';
+            } elseif ($stock === '' || !ctype_digit($stock) || (int)$stock < 0) {
+                $errors[] = 'Please enter a valid stock amount.';
             }
 
             if (!$errors) {
@@ -164,14 +164,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 if (!$errors) {
                     try {
-                        $stmt = $pdo->prepare('UPDATE products SET category_id = :category_id, name = :name, slug = :slug, description = :description, price = :price, quantity = :quantity, image = :image WHERE id = :id');
+                        $stmt = $pdo->prepare('UPDATE products SET category_id = :category_id, name = :name, slug = :slug, description = :description, price = :price, stock = :stock, image = :image WHERE id = :id');
                         $stmt->execute([
                             'category_id' => $categoryId,
                             'name' => $name,
                             'slug' => $slug,
                             'description' => $description,
                             'price' => (float)$price,
-                            'quantity' => (int)$quantity,
+                            'stock' => (int)$stock,
                             'image' => $imagePath,
                             'id' => $editId,
                         ]);
@@ -254,7 +254,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $name = trim((string)($_POST['name'] ?? ''));
         $description = trim((string)($_POST['description'] ?? ''));
         $price = trim((string)($_POST['price'] ?? ''));
-        $quantity = trim((string)($_POST['quantity'] ?? ''));
+        $stock = trim((string)($_POST['stock'] ?? ''));
         $categoryId = (int)($_POST['category_id'] ?? 0);
 
         if ($name === '') {
@@ -266,8 +266,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($price === '' || !is_numeric($price) || (float)$price < 0) {
             $errors[] = 'Please enter a valid price.';
         }
-        if ($quantity === '' || !ctype_digit((string)$quantity) || (int)$quantity < 0) {
-            $errors[] = 'Please enter a valid quantity.';
+        if ($stock === '' || !ctype_digit($stock) || (int)$stock < 0) {
+            $errors[] = 'Please enter a valid stock amount.';
         }
 
         if (!$errors) {
@@ -326,14 +326,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             if (!$errors) {
                 try {
-                    $stmt = $pdo->prepare('INSERT INTO products (category_id, name, slug, description, price, quantity, image) VALUES (:category_id, :name, :slug, :description, :price, :quantity, :image)');
+                    $stmt = $pdo->prepare('INSERT INTO products (category_id, name, slug, description, price, stock, image) VALUES (:category_id, :name, :slug, :description, :price, :stock, :image)');
                     $ok = $stmt->execute([
                         'category_id' => $categoryId,
                         'name' => $name,
                         'slug' => $slug,
                         'description' => $description,
                         'price' => (float)$price,
-                        'quantity' => (int)$quantity,
+                        'stock' => (int)$stock,
                         'image' => $imagePath,
                     ]);
                 } catch (Throwable $e) {
@@ -345,7 +345,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $name = '';
                     $description = '';
                     $price = '';
-                    $quantity = '';
+                    $stock = '';
                     $categoryId = '';
                 } else {
                     if ($imagePath !== null) {
@@ -513,8 +513,8 @@ if ($editId > 0 && $editProduct === null) {
                         <input type="number" step="0.01" min="0" name="price" class="form-control" value="<?php echo htmlspecialchars($editProduct['price'] ?? ''); ?>" required>
                     </div>
                     <div class="col-md-3">
-                        <label class="form-label">Quantity *</label>
-                        <input type="number" min="0" step="1" name="quantity" class="form-control" value="<?php echo htmlspecialchars((string)($editProduct['quantity'] ?? 0)); ?>" required>
+                        <label class="form-label">Stock *</label>
+                        <input type="number" min="0" step="1" name="stock" class="form-control" value="<?php echo htmlspecialchars((string)($editProduct['stock'] ?? 0)); ?>" required>
                     </div>
                     <div class="col-12">
                         <label class="form-label">Description</label>
@@ -561,8 +561,8 @@ if ($editId > 0 && $editProduct === null) {
                         <input type="number" step="0.01" min="0" name="price" class="form-control" value="<?php echo htmlspecialchars($price); ?>" required>
                     </div>
                     <div class="col-md-3">
-                        <label class="form-label">Quantity *</label>
-                        <input type="number" min="0" step="1" name="quantity" class="form-control" value="<?php echo htmlspecialchars($quantity); ?>" required>
+                        <label class="form-label">Stock *</label>
+                        <input type="number" min="0" step="1" name="stock" class="form-control" value="<?php echo htmlspecialchars($stock); ?>" required>
                     </div>
                     <div class="col-12">
                         <label class="form-label">Description</label>
@@ -623,7 +623,7 @@ if ($editId > 0 && $editProduct === null) {
                                 <th>Product Name</th>
                                 <th>Category</th>
                                 <th style="width: 120px;">Price</th>
-                                <th style="width: 100px;">Quantity</th>
+                                <th style="width: 100px;">Stock</th>
                                 <th style="width: 160px;">Actions</th>
                             </tr>
                         </thead>
@@ -657,7 +657,7 @@ if ($editId > 0 && $editProduct === null) {
                                         <strong class="text-primary">₱<?php echo number_format((float)($product['price'] ?? 0), 2); ?></strong>
                                     </td>
                                     <td>
-                                        <span class="badge bg-secondary-subtle text-dark"><?php echo (int)($product['quantity'] ?? 0); ?></span>
+                                        <span class="badge bg-secondary-subtle text-dark"><?php echo (int)($product['stock'] ?? 0); ?></span>
                                     </td>
                                     <td>
                                         <a href="products.php?edit=<?php echo (int)$product['id']; ?>" class="btn btn-sm btn-outline-primary">Edit</a>

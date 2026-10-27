@@ -12,6 +12,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $email = trim($_POST['email'] ?? '');
         $password = $_POST['password'] ?? '';
         $password_confirm = $_POST['password_confirm'] ?? '';
+        $delivery_address = $_POST['delivery_address'] ?? NULL;
+        $contact_number = $_POST['contact_number'] ?? NULL;
+
         if ($name === '') $errors[] = 'Name is required.';
         if (!filter_var($email, FILTER_VALIDATE_EMAIL)) $errors[] = 'A valid email is required.';
         if (strlen($password) < 8) $errors[] = 'Password must be at least 8 characters.';

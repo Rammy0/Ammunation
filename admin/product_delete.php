@@ -167,7 +167,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 <th>Product Name</th>
                                 <th>Category</th>
                                 <th style="width: 120px;">Price</th>
-                                <th style="width: 100px;">Quantity</th>
+                                <th style="width: 100px;">Stock</th>
                                 <th style="width: 100px;">Action</th>
                             </tr>
                         </thead>
@@ -194,7 +194,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                         <strong class="text-primary">₱<?php echo number_format((float)($prod['price'] ?? 0), 2); ?></strong>
                                     </td>
                                     <td>
-                                        <span class="badge bg-secondary-subtle text-dark"><?php echo (int)($prod['quantity'] ?? 0); ?></span>
+                                        <span class="badge bg-secondary-subtle text-dark"><?php echo (int)($prod['stock'] ?? 0); ?></span>
                                     </td>
                                     <td>
                                         <form method="post" data-ajax="true" onsubmit="return confirm('Delete this product? This action cannot be undone.');" style="display:inline;">

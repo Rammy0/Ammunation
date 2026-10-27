@@ -22,7 +22,7 @@ $cartCount = getStoreCartCount(is_array($cart) ? $cart : []);
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="assets/css/bootstrap-5.3.8-dist/css/bootstrap.min.css">
-    <link rel="stylesheet" href="assets/css/site.css">
+    <link rel="stylesheet" href="assets/css/site.css?v=20261015-order-images-65">
     <script src="assets/js/ajax-nav.js?v=20261011-tabs" defer></script>
 </head>
 <body data-auth-context="<?php echo htmlspecialchars(getAuthContextToken(), ENT_QUOTES, 'UTF-8'); ?>">

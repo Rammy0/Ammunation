@@ -144,8 +144,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $schemaReady) {
             if ($pdo->inTransaction()) {
                 $pdo->rollBack();
             }
-            error_log('Unable to place customer order: ' . $e->getMessage());
-            $errors[] = 'Unable to place your order. No order was created; please try again.';
+            if ($e instanceof PDOException && (int)($e->errorInfo[1] ?? 0) === 1644) {
+                $errors[] = 'One or more items are no longer available in the requested quantity. Update your cart and try again.';
+            } else {
+                error_log('Unable to place customer order: ' . $e->getMessage());
+                $errors[] = 'Unable to place your order. No order was created; please try again.';
+            }
         }
     }
 }

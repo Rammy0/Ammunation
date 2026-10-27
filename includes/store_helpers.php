@@ -125,7 +125,13 @@ function getStoreCartSummary(array $cart): array
     $count = 0;
     foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $product) {
         $productId = (int)$product['id'];
+        $availableStock = (int)($product['stock'] ?? 0);
+        if ($availableStock <= 0) {
+            continue;
+        }
+
         $quantity = max(1, (int)($cart[$productId] ?? 1));
+        $quantity = min($quantity, $availableStock);
         $subtotal = (float)$product['price'] * $quantity;
         $items[] = ['product' => $product, 'quantity' => $quantity, 'subtotal' => $subtotal];
         $total += $subtotal;

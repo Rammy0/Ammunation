@@ -14,6 +14,7 @@ CREATE TABLE IF NOT EXISTS products (
   slug VARCHAR(180) NOT NULL,
   description TEXT NULL,
   price DECIMAL(12,2) NOT NULL DEFAULT 0.00,
+  stock INT NOT NULL DEFAULT 0,
   image VARCHAR(255) NULL,
   PRIMARY KEY (id),
   UNIQUE KEY uniq_product_slug (slug),

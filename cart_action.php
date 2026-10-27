@@ -33,7 +33,24 @@ if (empty($_SESSION['cart']) || !is_array($_SESSION['cart'])) {
 if ($action === 'clear') {
     $_SESSION['cart'] = [];
 } elseif ($action === 'increase' && isset($_SESSION['cart'][$productId])) {
-    $_SESSION['cart'][$productId] = (int)$_SESSION['cart'][$productId] + 1;
+    $stmt = $pdo->prepare("SELECT stock FROM products WHERE id = :id AND status = 'available' LIMIT 1");
+    $stmt->execute(['id' => $productId]);
+    $product = $stmt->fetch(PDO::FETCH_ASSOC);
+    if (!$product) {
+        sendJsonResponse(['error' => 'This product is no longer available.'], 404);
+    }
+
+    $availableStock = (int)($product['stock'] ?? 0);
+    if ($availableStock <= 0) {
+        sendJsonResponse(['error' => 'This product is out of stock.'], 409);
+    }
+
+    $nextQuantity = (int)$_SESSION['cart'][$productId] + 1;
+    if ($nextQuantity > $availableStock) {
+        sendJsonResponse(['error' => 'Only ' . $availableStock . ' item(s) are currently available.'], 409);
+    }
+
+    $_SESSION['cart'][$productId] = $nextQuantity;
 } elseif ($action === 'decrease' && isset($_SESSION['cart'][$productId])) {
     $quantity = (int)$_SESSION['cart'][$productId] - 1;
     if ($quantity > 0) {

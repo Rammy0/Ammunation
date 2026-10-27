@@ -8,6 +8,7 @@
             var url = new URL(value, window.location.href);
             if (url.origin !== window.location.origin || url.hash && !url.pathname) return value;
             if (url.searchParams.has('new_context')) return url.href;
+            if (url.searchParams.has('_ctx')) return url.href;
             url.searchParams.set('_ctx', token);
             return url.href;
         } catch (error) {
