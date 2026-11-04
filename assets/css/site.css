@@ -590,9 +590,127 @@ h1, h2, h3, h4, h5, .navbar, .side-menu, .tagline { font-family: 'Rajdhani', san
 .status-completed { background: linear-gradient(90deg, #2f8d6b 0%, #80d4b0 100%); }
 .status-cancelled { background: linear-gradient(90deg, #b45a5f 0%, #e1969c 100%); }
 
+.sales-chart-row {
+  display: grid;
+  grid-template-columns: 90px minmax(100px, 1fr) minmax(170px, .75fr);
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: .9rem;
+}
+.sales-chart-track {
+  height: 18px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(241, 223, 173, 0.12);
+}
+.sales-chart-bar {
+  display: block;
+  height: 100%;
+  min-width: 0;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #9b7837 0%, #f3dfac 100%);
+}
+.sales-chart-values {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: .75rem;
+  color: rgba(245, 241, 229, 0.85);
+}
+.sales-chart-values span,
+.inventory-summary span {
+  color: rgba(245, 241, 229, 0.65);
+  font-size: .82rem;
+}
+.best-seller-chart {
+  display: grid;
+  grid-template-columns: minmax(150px, 220px) minmax(0, 1fr);
+  align-items: center;
+  gap: 1.5rem;
+}
+.best-seller-pie {
+  width: min(100%, 220px);
+  aspect-ratio: 1;
+  justify-self: center;
+  border: 1px solid rgba(241, 223, 173, 0.25);
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.18);
+}
+.best-seller-legend {
+  display: grid;
+  gap: .75rem;
+}
+.best-seller-legend-item {
+  display: grid;
+  grid-template-columns: 12px minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: .6rem;
+  color: rgba(245, 241, 229, 0.88);
+  font-size: .88rem;
+}
+.best-seller-swatch {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--pie-color);
+}
+.best-seller-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.best-seller-share {
+  min-width: 3.5em;
+  color: rgba(245, 241, 229, 0.65);
+  text-align: right;
+  font-size: .82rem;
+}
+.inventory-summary {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: .75rem 1.25rem;
+}
+.inventory-summary div {
+  display: grid;
+  gap: .15rem;
+}
+.inventory-summary strong {
+  font-size: 1.15rem;
+}
+.low-stock-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: .75rem;
+  padding: .7rem 0;
+  border-bottom: 1px solid rgba(241, 223, 173, 0.12);
+}
+.low-stock-item:last-child { border-bottom: 0; }
+.low-stock-item a {
+  color: rgba(245, 241, 229, 0.92);
+  text-decoration: none;
+}
+.low-stock-item a:hover { color: #f3dfac; text-decoration: underline; }
+
 @media (max-width: 767px) {
   .chart-row {
     grid-template-columns: 90px minmax(0, 1fr) 30px;
     gap: 0.5rem;
   }
+  .sales-chart-row {
+    grid-template-columns: 65px minmax(45px, 1fr);
+    gap: .5rem;
+  }
+  .sales-chart-values {
+    grid-column: 1 / -1;
+    padding-left: 65px;
+  }
+  .sales-chart-values span { text-align: right; }
+  .best-seller-chart {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 1.25rem;
+  }
+  .best-seller-pie { width: min(70vw, 220px); }
 }
