@@ -1,5 +1,5 @@
 <?php
-$pageTitle = 'Ammunation';
+$pageTitle = 'Ammunation: The Arsenal You Can Trust';
 require_once __DIR__ . '/includes/header.php';
 ?>
 <div class="container home-container">
