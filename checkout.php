@@ -117,13 +117,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $schemaReady) {
                  VALUES (:request_id, :product_id, :product_name, :quantity, :price)'
             );
             foreach ($summary['items'] as $item) {
+                $productId = (int)$item['product']['id'];
+                $quantity = (int)$item['quantity'];
                 $itemStmt->execute([
                     'request_id' => $orderId,
-                    'product_id' => (int)$item['product']['id'],
+                    'product_id' => $productId,
                     'product_name' => (string)$item['product']['name'],
-                    'quantity' => (int)$item['quantity'],
+                    'quantity' => $quantity,
                     'price' => (float)$item['product']['price'],
                 ]);
+                decrementProductStock($pdo, $productId, $quantity);
             }
 
             $stmt = $pdo->prepare('DELETE FROM cart WHERE user_id = :user_id');
@@ -144,7 +147,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $schemaReady) {
             if ($pdo->inTransaction()) {
                 $pdo->rollBack();
             }
-            if ($e instanceof PDOException && (int)($e->errorInfo[1] ?? 0) === 1644) {
+            if ($e instanceof DomainException
+                || ($e instanceof PDOException && (int)($e->errorInfo[1] ?? 0) === 1644)) {
                 $errors[] = 'One or more items are no longer available in the requested quantity. Update your cart and try again.';
             } else {
                 error_log('Unable to place customer order: ' . $e->getMessage());
@@ -163,7 +167,7 @@ require_once __DIR__ . '/includes/header.php';
             <div class="checkout-success-icon" aria-hidden="true">&#10003;</div>
             <h1 class="mb-2">Order placed!</h1>
             <p class="mb-1">Thank you, <?php echo htmlspecialchars($successOrder['customer_name'] ?? $customerName, ENT_QUOTES, 'UTF-8'); ?>.</p>
-            <p class="mb-4">Order #<?php echo (int)$successOrder['id']; ?> has been received and is now <strong><?php echo htmlspecialchars(ucfirst($successOrder['status']), ENT_QUOTES, 'UTF-8'); ?></strong>.</p>
+            <p class="mb-4">Your order has been received and is now <strong><?php echo htmlspecialchars(ucfirst($successOrder['status']), ENT_QUOTES, 'UTF-8'); ?></strong>.</p>
             <div class="checkout-success-summary text-start mx-auto mb-4">
                 <?php foreach ($successItems as $item): ?>
                     <div class="d-flex justify-content-between gap-3 py-2 border-bottom">

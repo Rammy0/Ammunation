@@ -73,9 +73,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <title>Delete Product - Ammunation</title>
     <link rel="stylesheet" href="../assets/css/bootstrap-5.3.8-dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="../assets/css/site.css">
+    <link rel="stylesheet" href="../assets/css/logout-confirmation.css">
 </head>
 <body class="with-sidebar" data-auth-context="<?php echo htmlspecialchars(getAuthContextToken(), ENT_QUOTES, 'UTF-8'); ?>">
 <script src="../assets/js/auth-context.js" defer></script>
+<script src="../assets/js/admin-idle-timeout.js" defer></script>
+<script src="../assets/js/logout-confirmation.js" defer></script>
     <nav class="side-menu">
         <div class="p-4">
             <h5 class="mb-4">Admin Panel</h5>
@@ -96,6 +99,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 
                 <li class="nav-item mb-2"><a class="nav-link" href="users.php">Manage Users</a></li>
                 <li class="nav-item mb-2"><a class="nav-link" href="orders.php">Orders</a></li>
+                <li class="nav-item mb-2"><a class="nav-link" href="reports.php">Reports</a></li>
                 <li class="nav-item mt-3"><a class="nav-link" href="../index.php">View site</a></li>
                 <li class="nav-item"><a class="nav-link text-danger" href="../logout.php">Log out</a></li>
             </ul>

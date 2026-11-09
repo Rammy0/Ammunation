@@ -46,4 +46,49 @@
     };
 
     window.applyAuthContext(document);
+
+    var logoutDialog;
+    var pendingLogoutUrl;
+
+    function createLogoutDialog() {
+        if (logoutDialog) return logoutDialog;
+
+        logoutDialog = document.createElement('dialog');
+        logoutDialog.className = 'logout-confirm-dialog';
+        logoutDialog.setAttribute('aria-labelledby', 'logoutConfirmTitle');
+        logoutDialog.innerHTML =
+            '<div class="logout-confirm-content">' +
+                '<h2 id="logoutConfirmTitle">Log out?</h2>' +
+                '<p>Are you sure you want to log out?</p>' +
+                '<div class="logout-confirm-actions">' +
+                    '<button type="button" class="btn btn-outline-light" data-logout-cancel>Stay logged in</button>' +
+                    '<button type="button" class="btn btn-danger" data-logout-confirm>Log out</button>' +
+                '</div>' +
+            '</div>';
+        document.body.appendChild(logoutDialog);
+
+        logoutDialog.addEventListener('click', function (event) {
+            if (event.target === logoutDialog || event.target.closest('[data-logout-cancel]')) {
+                logoutDialog.close();
+                return;
+            }
+            if (event.target.closest('[data-logout-confirm]') && pendingLogoutUrl) {
+                window.location.assign(pendingLogoutUrl);
+            }
+        });
+        logoutDialog.addEventListener('close', function () {
+            pendingLogoutUrl = null;
+        });
+
+        return logoutDialog;
+    }
+
+    document.addEventListener('click', function (event) {
+        var logoutLink = event.target.closest('[data-confirm-logout]');
+        if (!logoutLink) return;
+
+        event.preventDefault();
+        pendingLogoutUrl = logoutLink.href;
+        createLogoutDialog().showModal();
+    });
 })();

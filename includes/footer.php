@@ -30,5 +30,9 @@ $adminLink = $adminContextToken !== null
 <script src="assets/css/bootstrap-5.3.8-dist/js/bootstrap.bundle.min.js"></script>
 <script src="assets/js/jquery-4.0.0.min.js"></script>
 <script src="assets/js/site.js?v=20261011"></script>
+<script src="assets/js/logout-confirmation.js" defer></script>
+<?php if (isLoggedIn() && !isAdmin()): ?>
+    <script src="assets/js/client-presence.js" defer></script>
+<?php endif; ?>
 </body>
 </html>

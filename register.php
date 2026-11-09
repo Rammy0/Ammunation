@@ -21,8 +21,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($password !== $password_confirm) $errors[] = 'Passwords do not match.';
         if (!$errors) {
             if (getUserByEmail($email)) $errors[] = 'An account with that email already exists.';
-            elseif (createUser($name, $email, $password)) { header('Location: ' . withAuthContext('login.php?registered=1')); exit; }
-            else $errors[] = 'Failed to create account. Please try again.';
+            elseif (createUser($name, $email, $password)) {
+                header('Location: ' . withAuthContext('login.php?registered=1'));
+                exit;
+            } elseif (getUserByEmail($email)) {
+                $errors[] = 'An account with that email already exists.';
+            } else {
+                $errors[] = 'Failed to create account. Please try again.';
+            }
         }
     }
 }

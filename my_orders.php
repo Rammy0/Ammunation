@@ -30,19 +30,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $schemaReady) {
         $errors[] = 'Invalid order.';
     } else {
         try {
-            $stmt = $pdo->prepare(
-                "UPDATE requests SET status = 'cancelled'
-                 WHERE id = :id AND user_id = :user_id AND status = 'pending'"
-            );
-            $stmt->execute(['id' => $orderId, 'user_id' => $userId]);
-            if ($stmt->rowCount() === 1) {
-                $success = 'Your order was cancelled.';
-            } else {
-                $errors[] = 'This order cannot be cancelled.';
-            }
+            requestOrderCancellation($pdo, $orderId, $userId);
+            $success = 'Your cancellation request was sent to the admin for review.';
+        } catch (DomainException $e) {
+            $errors[] = $e->getMessage();
         } catch (Throwable $e) {
-            error_log('Unable to cancel customer order: ' . $e->getMessage());
-            $errors[] = 'Unable to cancel the order right now.';
+            error_log('Unable to request customer order cancellation: ' . $e->getMessage());
+            $errors[] = 'Unable to request cancellation right now.';
         }
     }
 }
@@ -54,7 +48,7 @@ try {
     } else {
         $stmt = $pdo->prepare(
             'SELECT id, customer_name, contact_number, payment_method, total_amount,
-                    delivery_address, status, created_at
+                    delivery_address, status, cancellation_status, cancellation_requested_at, created_at
              FROM requests WHERE user_id = :user_id ORDER BY created_at DESC, id DESC'
         );
         $stmt->execute(['user_id' => $userId]);
@@ -108,17 +102,19 @@ require_once __DIR__ . '/includes/header.php';
                 <?php
                 $orderId = (int)$order['id'];
                 $status = (string)$order['status'];
-                $statusClass = $status === 'completed' ? 'success' : ($status === 'cancelled' ? 'danger' : ($status === 'shipped' ? 'primary' : 'warning'));
+                $cancellationRequested = ($order['cancellation_status'] ?? 'none') === 'requested';
+                $displayStatus = $cancellationRequested ? 'Pending Review' : strtoupper($status);
+                $statusClass = $cancellationRequested ? 'info' : ($status === 'completed' ? 'success' : ($status === 'cancelled' ? 'danger' : ($status === 'shipped' ? 'primary' : 'warning')));
                 ?>
                 <article class="card order-history-card mb-3">
                     <header class="order-history-header">
                         <div>
-                            <h2 class="h5 mb-1">Order #<?php echo $orderId; ?></h2>
+                            <h2 class="h5 mb-1">Order</h2>
                             <time class="small" datetime="<?php echo htmlspecialchars(date(DATE_ATOM, strtotime($order['created_at'])), ENT_QUOTES, 'UTF-8'); ?>">
                                 <?php echo htmlspecialchars(date('M j, Y g:i A', strtotime($order['created_at'])), ENT_QUOTES, 'UTF-8'); ?>
                             </time>
                         </div>
-                        <span class="badge text-bg-<?php echo $statusClass; ?>"><?php echo htmlspecialchars(strtoupper($status), ENT_QUOTES, 'UTF-8'); ?></span>
+                        <span class="badge text-bg-<?php echo $statusClass; ?>"><?php echo htmlspecialchars($displayStatus, ENT_QUOTES, 'UTF-8'); ?></span>
                     </header>
                     <div class="card-body">
                         <div class="order-history-items">
@@ -139,12 +135,16 @@ require_once __DIR__ . '/includes/header.php';
                             </div>
                             <div class="text-end">
                                 <div class="fw-bold mb-2">Total: <span class="order-total">₱<?php echo number_format((float)$order['total_amount'], 2); ?></span></div>
-                                <?php if ($status === 'pending'): ?>
-                                    <form method="post" action="<?php echo htmlspecialchars(withAuthContext('my_orders.php'), ENT_QUOTES, 'UTF-8'); ?>" onsubmit="return confirm('Cancel this order?');">
+                                <?php if (($order['cancellation_status'] ?? '') === 'rejected'): ?>
+                                    <div class="small text-warning mb-2">Cancellation request rejected; your order remains active.</div>
+                                <?php endif; ?>
+                                <?php if (in_array($status, ['pending', 'approved', 'processing'], true)
+                                    && ($order['cancellation_status'] ?? 'none') !== 'requested'): ?>
+                                    <form method="post" action="<?php echo htmlspecialchars(withAuthContext('my_orders.php'), ENT_QUOTES, 'UTF-8'); ?>">
                                         <?php echo csrfInputField('cancel-order'); ?>
                                         <?php echo authContextInputField(); ?>
                                         <input type="hidden" name="order_id" value="<?php echo $orderId; ?>">
-                                        <button type="submit" class="btn btn-sm btn-outline-danger">Cancel order</button>
+                                        <button type="button" class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#cancellationConfirmModal">Request cancellation</button>
                                     </form>
                                 <?php endif; ?>
                             </div>
@@ -155,5 +155,40 @@ require_once __DIR__ . '/includes/header.php';
         </div>
     <?php endif; ?>
 </div>
+
+<div class="modal fade" id="cancellationConfirmModal" tabindex="-1" aria-labelledby="cancellationConfirmTitle" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title fs-5" id="cancellationConfirmTitle">Request order cancellation?</h2>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                Your order will remain active until an admin reviews your request.
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Keep order</button>
+                <button type="button" class="btn btn-danger" id="confirmCancellationRequest">Send request</button>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    (() => {
+        const modal = document.getElementById('cancellationConfirmModal');
+        const confirmButton = document.getElementById('confirmCancellationRequest');
+        let cancellationForm = null;
+
+        modal.addEventListener('show.bs.modal', (event) => {
+            cancellationForm = event.relatedTarget.closest('form');
+        });
+
+        confirmButton.addEventListener('click', () => {
+            if (cancellationForm) {
+                cancellationForm.requestSubmit();
+            }
+        });
+    })();
+</script>
 
 <?php require_once __DIR__ . '/includes/footer.php'; ?>

@@ -556,18 +556,22 @@ h1, h2, h3, h4, h5, .navbar, .side-menu, .tagline { font-family: 'Rajdhani', san
 }
 .chart-row {
   display: grid;
-  grid-template-columns: 120px minmax(0, 1fr) 38px;
+  grid-template-columns: minmax(0, 120px) minmax(0, 1fr) max-content;
   align-items: center;
   gap: 0.75rem;
   margin-bottom: 1rem;
+  min-width: 0;
 }
 .chart-row.compact { margin-bottom: .8rem; }
 .chart-label {
   font-size: .9rem;
   color: rgba(245, 241, 229, 0.85);
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 .chart-bar-track {
   width: 100%;
+  min-width: 0;
   height: 12px;
   background: rgba(255, 255, 255, 0.08);
   border-radius: 999px;
@@ -576,14 +580,20 @@ h1, h2, h3, h4, h5, .navbar, .side-menu, .tagline { font-family: 'Rajdhani', san
 }
 .chart-bar {
   display: block;
+  width: 0;
   height: 100%;
   border-radius: inherit;
   background: linear-gradient(90deg, #d9b96a 0%, #f3dfac 100%);
+  transition: width 850ms cubic-bezier(.22, 1, .36, 1);
+}
+.report-chart-bar.is-visible {
+  width: var(--chart-width);
 }
 .chart-value {
   text-align: right;
   color: rgba(245, 241, 229, 0.8);
   font-weight: 600;
+  white-space: nowrap;
 }
 .status-pending { background: linear-gradient(90deg, #f0b24d 0%, #f6d27f 100%); }
 .status-approved { background: linear-gradient(90deg, #7fbf6a 0%, #b9e39d 100%); }
@@ -592,12 +602,14 @@ h1, h2, h3, h4, h5, .navbar, .side-menu, .tagline { font-family: 'Rajdhani', san
 
 .sales-chart-row {
   display: grid;
-  grid-template-columns: 90px minmax(100px, 1fr) minmax(170px, .75fr);
+  grid-template-columns: minmax(75px, 90px) minmax(80px, 1fr) minmax(0, .9fr);
   align-items: center;
-  gap: 1rem;
+  gap: .75rem 1rem;
   margin-bottom: .9rem;
+  min-width: 0;
 }
 .sales-chart-track {
+  min-width: 0;
   height: 18px;
   overflow: hidden;
   border-radius: 999px;
@@ -606,18 +618,24 @@ h1, h2, h3, h4, h5, .navbar, .side-menu, .tagline { font-family: 'Rajdhani', san
 }
 .sales-chart-bar {
   display: block;
+  width: 0;
   height: 100%;
   min-width: 0;
   border-radius: inherit;
   background: linear-gradient(90deg, #9b7837 0%, #f3dfac 100%);
+  transition: width 900ms cubic-bezier(.22, 1, .36, 1);
 }
+.sales-chart-bar.is-visible { width: var(--chart-width); }
 .sales-chart-values {
   display: flex;
   justify-content: space-between;
   align-items: baseline;
+  min-width: 0;
   gap: .75rem;
   color: rgba(245, 241, 229, 0.85);
 }
+.sales-chart-values strong { white-space: nowrap; }
+.sales-chart-values span { text-align: right; }
 .sales-chart-values span,
 .inventory-summary span {
   color: rgba(245, 241, 229, 0.65);
@@ -628,6 +646,37 @@ h1, h2, h3, h4, h5, .navbar, .side-menu, .tagline { font-family: 'Rajdhani', san
   grid-template-columns: minmax(150px, 220px) minmax(0, 1fr);
   align-items: center;
   gap: 1.5rem;
+}
+.report-donut-layout {
+  display: grid;
+  grid-template-columns: minmax(150px, 220px) minmax(0, 1fr);
+  align-items: center;
+  gap: 1.5rem;
+}
+.report-donut {
+  width: min(100%, 220px);
+  aspect-ratio: 1;
+  justify-self: center;
+  border: 1px solid rgba(241, 223, 173, 0.25);
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.18);
+  position: relative;
+}
+.report-chart-donut.is-visible {
+  animation: report-chart-enter 700ms cubic-bezier(.22, 1, .36, 1) both;
+  animation-delay: var(--chart-delay, 0ms);
+}
+@keyframes report-chart-enter {
+  from { opacity: 0; transform: rotate(-24deg) scale(.86); }
+  to { opacity: 1; transform: rotate(0) scale(1); }
+}
+.report-donut::after {
+  content: "";
+  position: absolute;
+  inset: 25%;
+  border-radius: 50%;
+  background: #282319;
+  border: 1px solid rgba(241, 223, 173, 0.14);
 }
 .best-seller-pie {
   width: min(100%, 220px);
@@ -694,23 +743,62 @@ h1, h2, h3, h4, h5, .navbar, .side-menu, .tagline { font-family: 'Rajdhani', san
 }
 .low-stock-item a:hover { color: #f3dfac; text-decoration: underline; }
 
-@media (max-width: 767px) {
-  .chart-row {
-    grid-template-columns: 90px minmax(0, 1fr) 30px;
-    gap: 0.5rem;
-  }
+@media (max-width: 991px) {
   .sales-chart-row {
-    grid-template-columns: 65px minmax(45px, 1fr);
-    gap: .5rem;
+    grid-template-columns: minmax(75px, 90px) minmax(0, 1fr);
+    gap: .5rem .75rem;
   }
+  .sales-chart-track { grid-column: 2; grid-row: 2; }
   .sales-chart-values {
     grid-column: 1 / -1;
-    padding-left: 65px;
+    grid-row: 3;
+    justify-content: space-between;
+    padding-left: 0;
   }
-  .sales-chart-values span { text-align: right; }
+}
+@media (max-width: 767px) {
+  .chart-row {
+    grid-template-columns: minmax(0, 1fr) max-content;
+    gap: 0.5rem;
+  }
+  .chart-row .chart-bar-track { grid-column: 1 / -1; grid-row: 2; }
   .best-seller-chart {
     grid-template-columns: minmax(0, 1fr);
     gap: 1.25rem;
   }
+  .report-donut-layout {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 1.25rem;
+  }
+  .report-donut { width: min(70vw, 220px); }
   .best-seller-pie { width: min(70vw, 220px); }
+}
+@media (max-width: 575px) {
+  .admin-panel-card .card-body { padding: 1rem; }
+  .sales-chart-row {
+    grid-template-columns: minmax(0, 1fr) max-content;
+    gap: .45rem .65rem;
+    padding-bottom: .45rem;
+    border-bottom: 1px solid rgba(241, 223, 173, 0.1);
+  }
+  .sales-chart-row:last-child { border-bottom: 0; }
+  .sales-chart-track { grid-column: 1 / -1; grid-row: 2; }
+  .sales-chart-values {
+    grid-column: 1 / -1;
+    grid-row: 3;
+    align-items: flex-start;
+    gap: .35rem;
+    flex-direction: column;
+  }
+  .sales-chart-values span { text-align: left; }
+  .chart-label { font-size: .85rem; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .chart-bar,
+  .sales-chart-bar {
+    transition: none;
+  }
+  .report-chart-donut.is-visible {
+    animation: none;
+  }
 }

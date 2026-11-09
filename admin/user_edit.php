@@ -13,7 +13,7 @@ if ($id <= 0) {
 }
 
 try {
-    $stmt = $pdo->prepare('SELECT id, name, email, is_admin, created_at FROM users WHERE id = :id LIMIT 1');
+    $stmt = $pdo->prepare('SELECT id, uname AS name, email, is_admin, created_at FROM users WHERE id = :id LIMIT 1');
     $stmt->execute(['id' => $id]);
     $user = $stmt->fetch(PDO::FETCH_ASSOC);
 } catch (Throwable $e) {
@@ -65,8 +65,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="../assets/css/bootstrap-5.3.8-dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="../assets/css/site.css">
+    <link rel="stylesheet" href="../assets/css/logout-confirmation.css">
     <script src="../assets/js/ajax-nav.js?v=20261011-tabs" defer></script>
     <script src="../assets/js/auth-context.js" defer></script>
+    <script src="../assets/js/admin-idle-timeout.js" defer></script>
+    <script src="../assets/js/logout-confirmation.js" defer></script>
 </head>
 <body class="with-sidebar" data-auth-context="<?php echo htmlspecialchars(getAuthContextToken(), ENT_QUOTES, 'UTF-8'); ?>">
     <nav class="side-menu" aria-label="Admin sidebar">
@@ -80,6 +83,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <li class="nav-item mb-2"><a class="nav-link" href="products.php">Upload Products</a></li>
                 <li class="nav-item mb-2"><a class="nav-link" href="users.php">Manage Users</a></li>
                 <li class="nav-item mb-2"><a class="nav-link" href="orders.php">Orders</a></li>
+                <li class="nav-item mb-2"><a class="nav-link" href="reports.php">Reports</a></li>
                 <li class="nav-item mt-3"><a class="nav-link" href="../index.php">View site</a></li>
                 <li class="nav-item"><a class="nav-link text-danger" href="../logout.php">Log out</a></li>
             </ul>

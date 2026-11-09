@@ -1,13 +1,19 @@
 <?php
 require_once __DIR__ . '/../includes/auth.php';
-if (isLoggedIn() && isAdmin()) {
-    header('Location: ' . withAuthContext('admin.php'));
-    exit;
-}
-
 $errors = [];
-if (isset($_GET['session_expired'])) {
+if (isLoggedIn() && isAdmin()) {
+    if (refreshAdminSession()) {
+        header('Location: ' . withAuthContext('admin.php'));
+        exit;
+    }
+
+    logout();
     $errors[] = 'Your admin session expired or was replaced. Please sign in again.';
+}
+if (isset($_GET['session_expired'])) {
+    if (!$errors) {
+        $errors[] = 'Your admin session expired or was replaced. Please sign in again.';
+    }
 }
 $username = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {

@@ -1,0 +1,36 @@
+.logout-confirm-dialog {
+  width: min(420px, calc(100% - 2rem));
+  max-width: none;
+  padding: 0;
+  color: #fff;
+  background: linear-gradient(145deg, #302719, #4d412b);
+  border: 1px solid rgba(241, 223, 173, .35);
+  border-radius: 14px;
+  box-shadow: 0 1.25rem 3rem rgba(0, 0, 0, .45);
+}
+
+.logout-confirm-dialog::backdrop {
+  background: rgba(0, 0, 0, .68);
+  backdrop-filter: blur(3px);
+}
+
+.logout-confirm-content {
+  padding: 1.5rem;
+}
+
+.logout-confirm-content h2 {
+  margin: 0 0 .5rem;
+  color: #f1dfad;
+  font-size: 1.35rem;
+}
+
+.logout-confirm-content p {
+  margin: 0;
+}
+
+.logout-confirm-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: .5rem;
+  margin-top: 1.5rem;
+}

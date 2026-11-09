@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/../includes/auth.php';
+require_once __DIR__ . '/../includes/order_helpers.php';
 requireLogin();
 requireAdmin();
 
@@ -164,6 +165,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 if (!$errors) {
                     try {
+                        ensureProductPriceHistoryTable($pdo);
+                        removeLegacyStoreTriggers($pdo);
+                        $pdo->beginTransaction();
+                        $priceStmt = $pdo->prepare('SELECT price FROM products WHERE id = :id FOR UPDATE');
+                        $priceStmt->execute(['id' => $editId]);
+                        $oldPrice = $priceStmt->fetchColumn();
+                        if ($oldPrice === false) {
+                            throw new RuntimeException('Product not found.');
+                        }
+
                         $stmt = $pdo->prepare('UPDATE products SET category_id = :category_id, name = :name, slug = :slug, description = :description, price = :price, stock = :stock, image = :image WHERE id = :id');
                         $stmt->execute([
                             'category_id' => $categoryId,
@@ -175,6 +186,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             'image' => $imagePath,
                             'id' => $editId,
                         ]);
+                        recordProductPriceChange($pdo, $editId, $oldPrice, (float)$price);
+                        $pdo->commit();
                         if ($newImagePath !== null && !empty($editProduct['image'])) {
                             $oldImage = __DIR__ . '/../assets/images/' . ltrim($editProduct['image'], '/');
                             if (is_file($oldImage)) {
@@ -184,6 +197,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         $success = 'Product updated successfully.';
                         $editId = 0;
                     } catch (Throwable $e) {
+                        if ($pdo->inTransaction()) {
+                            $pdo->rollBack();
+                        }
+                        error_log('Unable to update product: ' . $e->getMessage());
                         if ($newImagePath !== null) {
                             $savedImage = __DIR__ . '/../assets/images/' . ltrim($newImagePath, '/');
                             if (is_file($savedImage)) {
@@ -412,9 +429,12 @@ if ($editId > 0 && $editProduct === null) {
     <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Product Management - Ammunation</title>
     <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="../assets/css/bootstrap-5.3.8-dist/css/bootstrap.min.css"><link rel="stylesheet" href="../assets/css/site.css">
+    <link rel="stylesheet" href="../assets/css/bootstrap-5.3.8-dist/css/bootstrap.min.css">    <link rel="stylesheet" href="../assets/css/site.css">
+    <link rel="stylesheet" href="../assets/css/logout-confirmation.css">
     <script src="../assets/js/ajax-nav.js?v=20261011-tabs" defer></script>
     <script src="../assets/js/auth-context.js" defer></script>
+    <script src="../assets/js/admin-idle-timeout.js" defer></script>
+    <script src="../assets/js/logout-confirmation.js" defer></script>
 </head><body class="with-sidebar" data-auth-context="<?php echo htmlspecialchars(getAuthContextToken(), ENT_QUOTES, 'UTF-8'); ?>">
     <nav class="side-menu" aria-label="Admin sidebar">
         <div class="side-inner">
@@ -438,6 +458,7 @@ if ($editId > 0 && $editProduct === null) {
                 
                 <li class="nav-item mb-2"><a class="nav-link" href="users.php">Manage Users</a></li>
                 <li class="nav-item mb-2"><a class="nav-link" href="orders.php">Orders</a></li>
+                <li class="nav-item mb-2"><a class="nav-link" href="reports.php">Reports</a></li>
                 <li class="nav-item mt-3"><a class="nav-link" href="../index.php">View site</a></li>
                 <li class="nav-item"><a class="nav-link text-danger" href="../logout.php">Log out</a></li>
             </ul>

@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/../includes/auth.php';
+require_once __DIR__ . '/../includes/order_helpers.php';
 requireLogin();
 requireAdmin();
 
@@ -155,6 +156,16 @@ if ($id > 0 && $_SERVER['REQUEST_METHOD'] === 'POST') {
 
             if (empty($errors)) {
                 try {
+                    ensureProductPriceHistoryTable($pdo);
+                    removeLegacyStoreTriggers($pdo);
+                    $pdo->beginTransaction();
+                    $priceStmt = $pdo->prepare('SELECT price FROM products WHERE id = :id FOR UPDATE');
+                    $priceStmt->execute(['id' => $id]);
+                    $oldPrice = $priceStmt->fetchColumn();
+                    if ($oldPrice === false) {
+                        throw new RuntimeException('Product not found.');
+                    }
+
                     $stmt = $pdo->prepare('UPDATE products SET category_id = :category_id, name = :name, slug = :slug, description = :description, price = :price, stock = :stock, image = :image WHERE id = :id');
                     $stmt->execute([
                         'category_id' => $categoryId,
@@ -166,6 +177,8 @@ if ($id > 0 && $_SERVER['REQUEST_METHOD'] === 'POST') {
                         'image' => $imagePath,
                         'id' => $id,
                     ]);
+                    recordProductPriceChange($pdo, $id, $oldPrice, (float)$price);
+                    $pdo->commit();
 
                     $success = 'Product updated.';
                     $product['name'] = $name;
@@ -175,6 +188,10 @@ if ($id > 0 && $_SERVER['REQUEST_METHOD'] === 'POST') {
                     $product['category_id'] = $categoryId;
                     $product['image'] = $imagePath;
                 } catch (Throwable $e) {
+                    if ($pdo->inTransaction()) {
+                        $pdo->rollBack();
+                    }
+                    error_log('Unable to update product: ' . $e->getMessage());
                     if ($imagePath !== ($product['image'] ?? null)) {
                         $savedImage = __DIR__ . '/../assets/images/' . ltrim((string)$imagePath, '/');
                         if (is_file($savedImage)) {
@@ -199,8 +216,11 @@ if ($id > 0 && $_SERVER['REQUEST_METHOD'] === 'POST') {
     <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="../assets/css/bootstrap-5.3.8-dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="../assets/css/site.css">
+    <link rel="stylesheet" href="../assets/css/logout-confirmation.css">
     <script src="../assets/js/ajax-nav.js?v=20261011-tabs" defer></script>
     <script src="../assets/js/auth-context.js" defer></script>
+    <script src="../assets/js/admin-idle-timeout.js" defer></script>
+    <script src="../assets/js/logout-confirmation.js" defer></script>
     <script src="../assets/css/bootstrap-5.3.8-dist/js/bootstrap.bundle.min.js" defer></script>
 </head>
 <body class="with-sidebar" data-auth-context="<?php echo htmlspecialchars(getAuthContextToken(), ENT_QUOTES, 'UTF-8'); ?>">
@@ -224,6 +244,7 @@ if ($id > 0 && $_SERVER['REQUEST_METHOD'] === 'POST') {
                 </li>
                 <li class="nav-item mb-2"><a class="nav-link" href="users.php">Manage Users</a></li>
                 <li class="nav-item mb-2"><a class="nav-link" href="orders.php">Orders</a></li>
+                <li class="nav-item mb-2"><a class="nav-link" href="reports.php">Reports</a></li>
                 <li class="nav-item mt-3"><a class="nav-link" href="../index.php">View site</a></li>
                 <li class="nav-item"><a class="nav-link text-danger" href="../logout.php">Log out</a></li>
             </ul>

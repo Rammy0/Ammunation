@@ -26,33 +26,40 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $currentUserId = (int)($_SESSION['user_id'] ?? 0);
 
             if ($action === 'toggle_admin') {
-                // Prevent removing admin role from the only admin
                 try {
-                    $stmt = $pdo->prepare('SELECT is_admin FROM users WHERE id = :id LIMIT 1');
+                    $pdo->beginTransaction();
+                    $pdo->query('SELECT id FROM admin_session_lock WHERE id = 1 FOR UPDATE');
+                    $stmt = $pdo->prepare('SELECT is_admin FROM users WHERE id = :id FOR UPDATE');
                     $stmt->execute(['id' => $targetId]);
                     $row = $stmt->fetch(PDO::FETCH_ASSOC);
+                    if (!$row) {
+                        throw new RuntimeException('User not found.');
+                    }
                     $isAdminNow = !empty($row['is_admin']);
+                    $countStmt = $pdo->query('SELECT COUNT(*) FROM users WHERE is_admin = 1');
+                    $adminCount = (int)$countStmt->fetchColumn();
 
-                    if ($isAdminNow) {
-                        // Count admins
-                        $countStmt = $pdo->query('SELECT COUNT(*) FROM users WHERE is_admin = 1');
-                        $adminCount = (int)$countStmt->fetchColumn();
-                        if ($adminCount <= 1) {
-                            $errors[] = 'Cannot remove admin role: there must be at least one admin.';
-                        }
+                    if (!$isAdminNow && $adminCount >= 1) {
+                        $errors[] = 'Only one admin account is allowed.';
+                    } elseif ($isAdminNow && $adminCount <= 1) {
+                        $errors[] = 'Cannot remove admin role: there must be one admin account.';
+                    } elseif ($targetId === $currentUserId) {
+                        $errors[] = 'You cannot change your own admin role.';
                     }
 
                     if (empty($errors)) {
                         $stmt = $pdo->prepare('UPDATE users SET is_admin = :is_admin WHERE id = :id');
                         $stmt->execute(['is_admin' => $isAdminNow ? 0 : 1, 'id' => $targetId]);
+                        $pdo->commit();
                         $success = 'User role updated.';
-
-                        // If changed current user's admin flag, refresh session
-                        if ($targetId === $currentUserId) {
-                            $_SESSION['is_admin'] = !$isAdminNow;
-                        }
+                    } else {
+                        $pdo->rollBack();
                     }
                 } catch (Throwable $e) {
+                    if ($pdo->inTransaction()) {
+                        $pdo->rollBack();
+                    }
+                    error_log('Unable to update user role: ' . $e->getMessage());
                     $errors[] = 'Unable to update user role.';
                 }
             } elseif ($action === 'delete') {
@@ -79,8 +86,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 try {
-    $users = $pdo->query('SELECT id, name, email, is_admin, created_at FROM users ORDER BY created_at DESC LIMIT 200')->fetchAll(PDO::FETCH_ASSOC);
+    ensureClientPresenceTable();
+    $users = $pdo->query(
+        "SELECT u.id, u.uname AS name, u.email, u.is_admin, u.created_at,
+                CASE
+                    WHEN u.is_admin = 1 THEN NULL
+                    WHEN cp.last_seen >= UTC_TIMESTAMP() - INTERVAL 2 MINUTE THEN 'Active'
+                    ELSE 'Offline'
+                END AS presence_status
+         FROM users u
+         LEFT JOIN client_presence cp ON cp.user_id = u.id
+         ORDER BY u.created_at DESC
+         LIMIT 200"
+    )->fetchAll(PDO::FETCH_ASSOC);
 } catch (Throwable $e) {
+    error_log('Unable to load user presence status: ' . $e->getMessage());
     $users = [];
     $errors[] = 'Unable to load user list.';
 }
@@ -96,8 +116,11 @@ try {
     <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="../assets/css/bootstrap-5.3.8-dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="../assets/css/site.css">
+    <link rel="stylesheet" href="../assets/css/logout-confirmation.css">
     <script src="../assets/js/ajax-nav.js?v=20261011-tabs" defer></script>
     <script src="../assets/js/auth-context.js" defer></script>
+    <script src="../assets/js/admin-idle-timeout.js" defer></script>
+    <script src="../assets/js/logout-confirmation.js" defer></script>
     <script src="../assets/css/bootstrap-5.3.8-dist/js/bootstrap.bundle.min.js" defer></script>
 </head>
 <body class="with-sidebar" data-auth-context="<?php echo htmlspecialchars(getAuthContextToken(), ENT_QUOTES, 'UTF-8'); ?>">
@@ -124,6 +147,7 @@ try {
                 
                 <li class="nav-item mb-2"><a class="nav-link" href="users.php">Manage Users</a></li>
                 <li class="nav-item mb-2"><a class="nav-link" href="orders.php">Orders</a></li>
+                <li class="nav-item mb-2"><a class="nav-link" href="reports.php">Reports</a></li>
                 <li class="nav-item mt-3"><a class="nav-link" href="../index.php">View site</a></li>
                 <li class="nav-item"><a class="nav-link text-danger" href="../logout.php">Log out</a></li>
             </ul>
@@ -176,6 +200,7 @@ try {
                             <th>Name</th>
                             <th>Email</th>
                             <th>Admin</th>
+                            <th>Client status</th>
                             <th>Registered</th>
                             <th class="text-end">Actions</th>
                         </tr>
@@ -187,6 +212,16 @@ try {
                                 <td><?php echo htmlspecialchars($u['name'] ?? ''); ?></td>
                                 <td><?php echo htmlspecialchars($u['email'] ?? ''); ?></td>
                                 <td><?php echo !empty($u['is_admin']) ? '<span class="badge bg-success">Yes</span>' : '<span class="badge bg-secondary">No</span>'; ?></td>
+                                <td>
+                                    <?php if (!empty($u['is_admin'])): ?>
+                                        <span class="text-muted">—</span>
+                                    <?php else: ?>
+                                        <?php $isActive = ($u['presence_status'] ?? '') === 'Active'; ?>
+                                        <span class="badge <?php echo $isActive ? 'bg-success' : 'bg-secondary'; ?>">
+                                            <?php echo $isActive ? 'Active' : 'Offline'; ?>
+                                        </span>
+                                    <?php endif; ?>
+                                </td>
                                 <td><?php echo htmlspecialchars($u['created_at'] ?? ''); ?></td>
                                 <td class="text-end">
                                     <div class="d-inline-block">

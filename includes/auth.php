@@ -228,16 +228,22 @@ function createUser(string $name, string $email, string $password): bool
 {
     global $pdo;
     $hash = password_hash($password, PASSWORD_DEFAULT);
-    $stmt = $pdo->prepare('INSERT INTO users (uname, email, password) VALUES (:name, :email, :password)');
     try {
-        return (bool)$stmt->execute(['uname' => $name, 'email' => $email, 'password' => $hash]);
+        $stmt = $pdo->prepare('INSERT INTO users (uname, email, password) VALUES (:name, :email, :password)');
+        $stmt->bindValue(':name', $name, PDO::PARAM_STR);
+        $stmt->bindValue(':email', $email, PDO::PARAM_STR);
+        $stmt->bindValue(':password', $hash, PDO::PARAM_STR);
+        return $stmt->execute();
     } catch (PDOException $e) {
-        // Handle duplicate email (unique constraint)
-        if ($e->getCode() === '23000') {
+        $sqlState = (string)($e->errorInfo[0] ?? $e->getCode());
+        $driverCode = (int)($e->errorInfo[1] ?? 0);
+        if ($sqlState === '23000' && $driverCode === 1062) {
             return false;
         }
-        // For other DB errors, log and return false
-        error_log('createUser DB error: ' . $e->getMessage());
+        error_log(
+            'createUser DB error (SQLSTATE: ' . $sqlState .
+            ', driver code: ' . $driverCode . '): ' . $e->getMessage()
+        );
         return false;
     }
 }
@@ -336,6 +342,21 @@ function ensureAdminSessionLock(): void
     );
 }
 
+/** Creates the presence table used to report whether client accounts are online. */
+function ensureClientPresenceTable(): void
+{
+    global $pdo;
+
+    $pdo->exec(
+        'CREATE TABLE IF NOT EXISTS client_presence (
+            user_id INT NOT NULL PRIMARY KEY,
+            last_seen DATETIME NOT NULL,
+            CONSTRAINT fk_client_presence_user
+                FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4'
+    );
+}
+
 /** Creates a lock identity unique to this tab as well as this PHP session. */
 function adminSessionLockKey(?string $sessionId = null): string
 {
@@ -351,7 +372,8 @@ function reserveAdminSession(int $userId): bool
         ensureAdminSessionLock();
         $pdo->beginTransaction();
         $stmt = $pdo->query(
-            'SELECT session_id, (last_seen >= UTC_TIMESTAMP() - INTERVAL 30 MINUTE) AS active
+            'SELECT session_id,
+                    (last_seen >= UTC_TIMESTAMP() - INTERVAL 5 MINUTE) AS active
              FROM admin_session_lock WHERE id = 1 FOR UPDATE'
         );
         $lock = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -424,34 +446,28 @@ function refreshAdminSession(): bool
         $stmt = $pdo->prepare(
             'UPDATE admin_session_lock
              SET last_seen = UTC_TIMESTAMP()
-             WHERE id = 1 AND session_id = :session_id AND user_id = :user_id'
+             WHERE id = 1 AND session_id = :session_id AND user_id = :user_id
+               AND last_seen >= UTC_TIMESTAMP() - INTERVAL 5 MINUTE'
         );
         $stmt->execute([
             'session_id' => adminSessionLockKey(),
             'user_id' => (int)($_SESSION['user_id'] ?? 0),
         ]);
-        if ($stmt->rowCount() === 1) {
-            return true;
-        }
-
         $stmt = $pdo->prepare(
             'UPDATE admin_session_lock
              SET session_id = :session_key, last_seen = UTC_TIMESTAMP()
              WHERE id = 1 AND session_id = :legacy_session_id AND user_id = :user_id
-               AND last_seen >= UTC_TIMESTAMP() - INTERVAL 30 MINUTE'
+               AND last_seen >= UTC_TIMESTAMP() - INTERVAL 5 MINUTE'
         );
         $stmt->execute([
             'session_key' => adminSessionLockKey(),
             'legacy_session_id' => session_id(),
             'user_id' => (int)($_SESSION['user_id'] ?? 0),
         ]);
-        if ($stmt->rowCount() === 1) {
-            return true;
-        }
-
         $stmt = $pdo->prepare(
             'SELECT 1 FROM admin_session_lock
-             WHERE id = 1 AND session_id = :session_id AND user_id = :user_id'
+             WHERE id = 1 AND session_id = :session_id AND user_id = :user_id
+               AND last_seen >= UTC_TIMESTAMP() - INTERVAL 5 MINUTE'
         );
         $stmt->execute([
             'session_id' => adminSessionLockKey(),
