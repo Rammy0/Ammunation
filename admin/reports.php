@@ -161,7 +161,7 @@ $statusDonut = $statusStops
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Reports - Ammunation Admin</title>
     <link rel="stylesheet" href="../assets/css/bootstrap-5.3.8-dist/css/bootstrap.min.css">
-    <link rel="stylesheet" href="../assets/css/site.css">
+    <link rel="stylesheet" href="../assets/css/site.css?v=20261110-reports">
     <script src="../assets/js/auth-context.js" defer></script>
     <script src="../assets/js/admin-idle-timeout.js" defer></script>
 </head>
@@ -272,6 +272,6 @@ $statusDonut = $statusStops
         </div>
     </main>
     <script src="../assets/css/bootstrap-5.3.8-dist/js/bootstrap.bundle.min.js"></script>
-    <script src="../assets/js/report-charts.js" defer></script>
+    <script src="../assets/js/report-charts.js?v=20261110-reports" defer></script>
 </body>
 </html>

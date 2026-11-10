@@ -71,25 +71,60 @@ $(function () {
 
     var $menu = $('#sideMenu');
     var $hotspot = $('#menuHotspot');
+    var $menuToggle = $('#clientMenuToggle');
 
-    if ($menu.length && $hotspot.length) {
+    if ($menu.length) {
         var hideTimer;
+        var pinned = false;
 
         function openMenu() {
             clearTimeout(hideTimer);
             $menu.removeClass('collapsed').addClass('open');
+            $('body').addClass('client-sidebar-open');
+            $menuToggle.attr('aria-expanded', 'true').attr('aria-label', 'Hide navigation menu');
         }
 
         function closeMenu() {
+            if (pinned) return;
             clearTimeout(hideTimer);
             hideTimer = setTimeout(function () {
                 $menu.removeClass('open').addClass('collapsed');
                 $menu.find('.has-sub').removeClass('open');
+                $('body').removeClass('client-sidebar-open');
+                $menuToggle.attr('aria-expanded', 'false').attr('aria-label', 'Show navigation menu');
             }, 120);
         }
 
-        // Hover the invisible strip on the far-left edge to open the menu.
-        $hotspot.on('mouseenter', openMenu);
+        function closeMenuImmediately() {
+            pinned = false;
+            clearTimeout(hideTimer);
+            $menu.removeClass('open').addClass('collapsed');
+            $menu.find('.has-sub').removeClass('open');
+            $('body').removeClass('client-sidebar-open');
+            $menuToggle.attr('aria-expanded', 'false').attr('aria-label', 'Show navigation menu');
+        }
+
+        if ($hotspot.length) {
+            $hotspot.on('mouseenter', function () {
+                if (!pinned) openMenu();
+            });
+        }
+
+        $menuToggle.on('click', function () {
+            if (pinned) {
+                closeMenuImmediately();
+            } else {
+                pinned = true;
+                openMenu();
+            }
+        });
+
+        $(document).on('click', function (event) {
+            if (pinned
+                && !$(event.target).closest('#sideMenu, #clientMenuToggle').length) {
+                closeMenuImmediately();
+            }
+        });
 
         // Keep the menu open while the mouse is inside it.
         $menu.on('mouseenter', function () {
@@ -107,13 +142,13 @@ $(function () {
 
         // Close after selecting a normal menu link.
         $menu.on('click', 'a:not(.category-toggle)', function () {
-            closeMenu();
+            closeMenuImmediately();
         });
 
         // Escape closes the menu.
         $(document).on('keydown', function (event) {
             if (event.key === 'Escape') {
-                closeMenu();
+                closeMenuImmediately();
             }
         });
     }

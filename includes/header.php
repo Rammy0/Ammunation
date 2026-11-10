@@ -22,7 +22,7 @@ $cartCount = getStoreCartCount(is_array($cart) ? $cart : []);
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="assets/css/bootstrap-5.3.8-dist/css/bootstrap.min.css">
-    <link rel="stylesheet" href="assets/css/site.css?v=20261015-order-images-65">
+    <link rel="stylesheet" href="assets/css/site.css?v=20261110-client-menu-right">
     <link rel="stylesheet" href="assets/css/logout-confirmation.css">
     <script src="assets/js/ajax-nav.js?v=20261011-tabs" defer></script>
 </head>
@@ -34,6 +34,19 @@ $cartCount = getStoreCartCount(is_array($cart) ? $cart : []);
         <a class="navbar-brand d-flex align-items-center" href="index.php" aria-label="Ammunation home">
             <img src="assets/images/Logo/AmmunationLogo.png" alt="Ammunation Logo" class="brand-logo">
         </a>
+        <button
+            type="button"
+            class="client-menu-toggle"
+            id="clientMenuToggle"
+            aria-controls="sideMenu"
+            aria-expanded="false"
+            aria-label="Show navigation menu"
+        >
+            <span class="client-menu-toggle-icon" aria-hidden="true">
+                <span></span><span></span><span></span>
+            </span>
+            <span>Menu</span>
+        </button>
 
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarMain" aria-controls="navbarMain" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>

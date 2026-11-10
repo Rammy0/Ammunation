@@ -1,11 +1,15 @@
 (function () {
     var bars = Array.prototype.slice.call(document.querySelectorAll('.report-chart-bar[data-chart-width]'));
     var donuts = Array.prototype.slice.call(document.querySelectorAll('.report-chart-donut'));
-    var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    var reduceMotion = window.matchMedia
+        && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
     if (reduceMotion) {
         bars.forEach(function (bar) {
             bar.classList.add('is-visible');
+        });
+        donuts.forEach(function (donut) {
+            donut.classList.add('is-visible');
         });
         return;
     }

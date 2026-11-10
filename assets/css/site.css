@@ -27,7 +27,51 @@ h1, h2, h3, h4, h5, .navbar, .side-menu, .tagline { font-family: 'Rajdhani', san
 .site-navbar .nav-link { color: #fff !important; font-weight: 600; letter-spacing: 1px; }
 .site-navbar .nav-link:hover { color: var(--gold-light) !important; }
 .site-navbar .nav-link-accent { color: var(--gold-light) !important; }
+.site-navbar .navbar-brand { margin-right: .75rem; }
 .brand-logo { max-height: 76px; width: auto; display: block; }
+.client-menu-toggle {
+  position: relative;
+  z-index: 1060;
+  display: inline-flex;
+  align-items: center;
+  gap: .55rem;
+  min-height: 42px;
+  padding: .45rem .75rem;
+  color: var(--gold-light);
+  background: linear-gradient(135deg, #211d16, #51452e);
+  border: 1px solid rgba(241, 223, 173, .45);
+  border-radius: .5rem;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 .25rem .75rem rgba(0, 0, 0, .28);
+  transition: background-color .18s ease, color .18s ease;
+}
+.site-navbar .navbar-toggler { margin-left: auto; }
+.client-menu-toggle:hover,
+.client-menu-toggle:focus-visible {
+  color: #fff;
+  background: #5b4b2e;
+}
+.client-sidebar-open .client-menu-toggle {
+  visibility: hidden;
+  pointer-events: none;
+}
+.client-menu-toggle:focus-visible {
+  outline: 2px solid var(--gold-light);
+  outline-offset: 2px;
+}
+.client-menu-toggle-icon {
+  display: grid;
+  gap: 4px;
+  width: 18px;
+}
+.client-menu-toggle-icon span {
+  display: block;
+  height: 2px;
+  background: currentColor;
+  border-radius: 2px;
+}
 
 #pageContent { min-height: calc(100vh - 140px); }
 .home-container {
@@ -216,6 +260,7 @@ h1, h2, h3, h4, h5, .navbar, .side-menu, .tagline { font-family: 'Rajdhani', san
 }
 .site-footer a { color: var(--gold-light); text-decoration: none; }
 .site-footer a:hover { color: #fff; }
+.site-footer .admin-link-disabled { color: rgba(245, 241, 229, .55); cursor: not-allowed; }
 .footer-separator { margin: 0 .45rem; opacity: .45; }
 
 .product-toolbar {
@@ -511,7 +556,10 @@ h1, h2, h3, h4, h5, .navbar, .side-menu, .tagline { font-family: 'Rajdhani', san
 .auth-card { width: min(720px, 100%); background: linear-gradient(135deg, rgba(35,33,27,.96), rgba(107,95,66,.94), rgba(165,149,98,.9)); padding: 28px; border-radius: 12px; box-shadow: none; }
 .auth-card h1 { color: #fff; }
 
-@media (max-width: 800px) { .side-menu, .menu-hotspot { display: none; } }
+@media (max-width: 800px) {
+  .menu-hotspot { display: none; }
+  .side-menu { display: block; }
+}
 
 .with-sidebar { padding-left: 260px; transition: padding-left .22s ease; }
 
@@ -626,6 +674,10 @@ h1, h2, h3, h4, h5, .navbar, .side-menu, .tagline { font-family: 'Rajdhani', san
   transition: width 900ms cubic-bezier(.22, 1, .36, 1);
 }
 .sales-chart-bar.is-visible { width: var(--chart-width); }
+.chart-bar.report-chart-bar,
+.sales-chart-bar.report-chart-bar {
+  width: var(--chart-width, 0%);
+}
 .sales-chart-values {
   display: flex;
   justify-content: space-between;
@@ -655,6 +707,8 @@ h1, h2, h3, h4, h5, .navbar, .side-menu, .tagline { font-family: 'Rajdhani', san
 }
 .report-donut {
   width: min(100%, 220px);
+  min-width: 0;
+  background-color: rgba(255, 255, 255, 0.08);
   aspect-ratio: 1;
   justify-self: center;
   border: 1px solid rgba(241, 223, 173, 0.25);
@@ -697,6 +751,7 @@ h1, h2, h3, h4, h5, .navbar, .side-menu, .tagline { font-family: 'Rajdhani', san
   gap: .6rem;
   color: rgba(245, 241, 229, 0.88);
   font-size: .88rem;
+  min-width: 0;
 }
 .best-seller-swatch {
   width: 10px;
@@ -714,6 +769,16 @@ h1, h2, h3, h4, h5, .navbar, .side-menu, .tagline { font-family: 'Rajdhani', san
   color: rgba(245, 241, 229, 0.65);
   text-align: right;
   font-size: .82rem;
+}
+.chart-value,
+.sales-chart-values strong,
+.sales-chart-values span {
+  min-width: 0;
+  overflow-wrap: normal;
+  word-break: normal;
+}
+.chart-value {
+  white-space: nowrap;
 }
 .inventory-summary {
   display: flex;

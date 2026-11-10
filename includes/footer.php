@@ -15,11 +15,12 @@ foreach ($_SESSION['auth_contexts'] ?? [] as $contextToken => $authContext) {
 $adminLink = $adminContextToken !== null
     ? 'admin/admin.php?_ctx=' . rawurlencode($adminContextToken) . '&new_context=1'
     : withAuthContext('admin/login.php');
+$adminSessionActive = isAdminSessionActive();
 ?>
 
 <footer class="site-footer">
     <!-- <div class="container d-flex flex-column flex-md-row justify-content-between align-items-center gap-2"> -->
-        <center><span>&copy; <?php echo date('Y'); ?> Ammunation|<a class="mt-4 small text-muted" href="<?php echo htmlspecialchars($adminLink, ENT_QUOTES, 'UTF-8'); ?>">Admin</a></span></center>
+        <center><span>&copy; <?php echo date('Y'); ?> Ammunation|<?php if ($adminSessionActive): ?><span class="mt-4 small admin-link-disabled" aria-disabled="true" title="The admin is currently active">Admin</span><?php else: ?><a class="mt-4 small text-muted" href="<?php echo htmlspecialchars($adminLink, ENT_QUOTES, 'UTF-8'); ?>">Admin</a><?php endif; ?></span></center>
         <!-- <div> -->
             <!-- <span class="footer-separator">|</span> -->
             
@@ -29,7 +30,7 @@ $adminLink = $adminContextToken !== null
 
 <script src="assets/css/bootstrap-5.3.8-dist/js/bootstrap.bundle.min.js"></script>
 <script src="assets/js/jquery-4.0.0.min.js"></script>
-<script src="assets/js/site.js?v=20261011"></script>
+<script src="assets/js/site.js?v=20261110-client-menu-outside-close"></script>
 <script src="assets/js/logout-confirmation.js" defer></script>
 <?php if (isLoggedIn() && !isAdmin()): ?>
     <script src="assets/js/client-presence.js" defer></script>

@@ -342,6 +342,31 @@ function ensureAdminSessionLock(): void
     );
 }
 
+/** Returns whether the single administrator slot is currently active. */
+function isAdminSessionActive(): bool
+{
+    global $pdo;
+
+    try {
+        $table = $pdo->query("SHOW TABLES LIKE 'admin_session_lock'")->fetchColumn();
+        if (!$table) {
+            return false;
+        }
+
+        return (bool)$pdo->query(
+            'SELECT 1
+             FROM admin_session_lock
+             WHERE id = 1
+               AND session_id IS NOT NULL
+               AND last_seen >= UTC_TIMESTAMP() - INTERVAL 5 MINUTE
+             LIMIT 1'
+        )->fetchColumn();
+    } catch (Throwable $e) {
+        error_log('Unable to check active admin session for the public link: ' . $e->getMessage());
+        return true;
+    }
+}
+
 /** Creates the presence table used to report whether client accounts are online. */
 function ensureClientPresenceTable(): void
 {

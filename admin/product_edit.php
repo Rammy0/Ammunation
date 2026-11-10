@@ -256,7 +256,6 @@ if ($id > 0 && $_SERVER['REQUEST_METHOD'] === 'POST') {
             <center><span>&copy; <?php echo date('Y'); ?> Ammunation</span></center>
         </div>
     </nav>
-
     <main id="main-content" class="container py-5">
         <?php if ($id > 0 && $product): ?>
             <div class="d-flex justify-content-between align-items-center mb-4">

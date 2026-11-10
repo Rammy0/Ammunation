@@ -1,0 +1,10 @@
+Options -Indexes
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteRule ^(?:config|includes|database|state|assets/config)(?:/|$) - [F,L,NC]
+</IfModule>
+
+<FilesMatch "(^\.|\.sql$)">
+    Require all denied
+</FilesMatch>

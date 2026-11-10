@@ -429,7 +429,8 @@ if ($editId > 0 && $editProduct === null) {
     <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Product Management - Ammunation</title>
     <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="../assets/css/bootstrap-5.3.8-dist/css/bootstrap.min.css">    <link rel="stylesheet" href="../assets/css/site.css">
+    <link rel="stylesheet" href="../assets/css/bootstrap-5.3.8-dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="../assets/css/site.css">
     <link rel="stylesheet" href="../assets/css/logout-confirmation.css">
     <script src="../assets/js/ajax-nav.js?v=20261011-tabs" defer></script>
     <script src="../assets/js/auth-context.js" defer></script>
